@@ -103,47 +103,38 @@ AUTOTEST(testMove) //{{{1
 	REQUIRE( !d.gt() );
 	REQUIRE( i == 241 );
 }
-//}}}
 
-#if 0
-//{{{1 testTurn()
-struct TestTurn : public Action //{{{2
+AUTOTEST(testTurn) //{{{1
 {
-	virtual int main()
+	Subs<int> dir;
+	Subs<Time> dt(dir, "time-change");
+	Subs<int> watchdog(dir, "watchdog");
+	Subs<Pose> dp(dir, "pose-change");
+	Subs<Speed> req(dir, "speed-requested");
+	Field field;
+	Task e(Simul::fac(dir, field, 0));
+	int i = 0;
+	waitFor(dt);
+	
+	Time t = Sec(2);
+	Deg a(180);
+	req.value.m_angular = AngularSpeed(Deg(180));
+	req.publish();
+	while( t.gt() && a.gt() )
 	{
-		using num::Milim; using num::Deg; using num::Sec; using num::Time; using num::ASpeed;
-		msg::TimeChange dt;
-		Subs s1("time_change", &dt);
-		msg::Speed requestedSpeed;
-		Regs r1("cz.robotika.ester.requested_speed", &requestedSpeed);
-		msg::PoseChange dp;
-		Subs s2("cz.robotika.ester.pose_change", &dp);
-		execute();
-
-		Time t = Sec(2);
-		Deg a(180);
-		requestedSpeed.m_time = dt.m_time;
-		requestedSpeed.m_omega = ASpeed(Deg(180));
-		while( t.gt() && a.gt() )
-		{
-			execute();
-			t -= dt.m_dt;
-			a -= dp.m_dp.m_a;
-			//cout << t.ms() << ": " << a.deg() << endl;
-		}
-		ASSERT( a.lt() );
-		return 0;
+		t -= dt.value;
+		a -= dp.value.heading();
+		i++;
+		//cout << t.ms() << ": " << a.deg() << endl;
+		watchdog.publish();
+		waitFor(dt);
 	}
-};
-
-AUTOTEST(testTurn) //{{{2
-{
-	EsterSimul t2;
-	TestTurn t3;
-	g_main.waitForAny();
+	REQUIRE( a.lt() );
+	REQUIRE( i == 217 );
 }
 //}}}
 
+#if 0
 //{{{1 testTruePose()
 struct TestTruePose : public Action //{{{2
 {
