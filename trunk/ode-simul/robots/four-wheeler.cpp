@@ -18,12 +18,13 @@ namespace {
 	num::Dist RADIUS() {return Milim(50);}
 	double WMASS() {return 1;}
 	double CHASSIS_MASS() {return 10;}
-	double FMAX() { return 25;}
+	double FMAX() { return 1;}
 
 };
 
 FourWheeler::FourWheeler(msg::Channel* in_pChannel) : OdeRobot(in_pChannel), 
-m_reqSpeed(m_pChannel,"speed-requested", this, &FourWheeler::reqSpeed)
+m_reqSpeed(m_pChannel,"speed-requested", this, &FourWheeler::reqSpeed),
+m_currentSpeed(m_pChannel,"speed-current")
 {
 }
 
@@ -38,6 +39,7 @@ void FourWheeler::create(dWorld* in_world, dSpace* in_space, Pose in_pose)
 {
 	msg::Subs<num::Pose> pose(m_pChannel,"true-pose");
 	msg::Subs<num::Speed, FourWheeler> reqSpeed(m_pChannel,"speed-requested", this, &FourWheeler::reqSpeed);
+	msg::Subs<num::Speed> currentSpeed(m_pChannel, "speed-current");
 
 	pose.value = in_pose;
 
@@ -113,13 +115,16 @@ void FourWheeler::update()
 	const dReal* pos = m_pChassisBox->getPosition();
 	std::cout << "Robot box position: " << pos[0] << "," << pos[1] << "," << pos[2] << std::endl;
 
-	dReal speed = m_reqSpeed.value.m_forward.m()*-10;
-
+	dReal speed = m_reqSpeed.value.m_forward.m()/RADIUS().m()*-1;
 	for (int i=0;i<4;i++)
 	{
 		m_joints[i].setParam(dParamVel2,speed);
 		m_joints[i].setParam(dParamFMax2,FMAX());
+		// cout << m_joints[i].getAngle2Rate() << ",";
 		dBodyEnable(m_joints[i].getBody(0));
 		dBodyEnable(m_joints[i].getBody(1));
 	}
+	m_currentSpeed.value.m_forward = Meter(m_joints[0].getAngle2Rate()*RADIUS().m() * -1);
+	cout << "Current speed is: " << m_currentSpeed.value.m_forward.mm() << endl;
+	m_currentSpeed.publish();
 }

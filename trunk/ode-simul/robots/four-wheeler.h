@@ -20,6 +20,7 @@ class FourWheeler : public OdeRobot
 	private:
 		void reqSpeed(num::Speed& in_speed);
 		msg::Subs<num::Speed, FourWheeler> m_reqSpeed;
+	  msg::Subs<num::Speed> m_currentSpeed;
 		dBody* m_pChassis;
 		dBox* m_pChassisBox;
 		dHinge2Joint* m_joints;
