@@ -38,6 +38,8 @@ Field::Field(int in_flags) //{{{1
 	if (in_flags & VERBOSE) m_verbose = true;
 }
 
+Field::~Field() {} //{{{1
+
 void Field::setPalm(int in_crossingX, int in_crossingY) //{{{1
 {
 	ASSERT( in_crossingX >= 2 && in_crossingX <=6 );
