@@ -4,6 +4,7 @@
 
 #include <algorithm>
 #include <ctime>
+#include <iostream>
 
 using namespace measures;
 using namespace num;
@@ -32,7 +33,7 @@ namespace {
 	//}}}
 }
 
-Field::Field(int in_flags) //{{{1
+Field::Field(int in_flags) : m_score(0), m_verbose(false) //{{{1
 {
 	if (in_flags & RAND_PALM) randPalm(0); else setPalm(2,2);
 	if (in_flags & RAND_BALL)	setBall(0); else setBall(2,6,11);
@@ -189,12 +190,30 @@ void Field::checkPalms(const Point & in_p) //{{{1
 
 void Field::checkEnemy(const Point & in_p) //{{{1
 {
-  if (in_p.distanceTo(m_enemy) < m_minEnemyDist)
+	if (in_p.distanceTo(m_enemy) < m_minEnemyDist)
   {
 	  m_minEnemyDist = in_p.distanceTo(m_enemy);
 	  m_minEnemyPose = in_p;
 	  //m_minEnemyTime = m_timeChange.m_time;
   }
+}
+
+int Field::tryEatBall(const Pose & in_pose, const Dist & BALL_EAT_DIST) //{{{1
+{
+	ASSERT( m_balls.size() <= 8 );
+	//cout << "*** Number of balls: " << m_balls.size() << endl;
+ 	list<Point>::iterator iter;
+
+	for (iter = m_balls.begin(); iter != m_balls.end(); ++iter)
+	{
+		if (iter->distanceTo(in_pose.point()) <= BALL_EAT_DIST)
+		{
+			if (m_verbose) cout << "*** Just eaten ball at " << "[" << *iter << "]" << endl;
+			m_balls.erase(iter);
+			return 1;
+		}
+	}
+	return 0;
 }
 //}}}1
 
