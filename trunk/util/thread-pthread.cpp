@@ -42,14 +42,33 @@ namespace thread
 	void* Key::getVoid() { return pthread_getspecific(m_key); }
 
 	Lock::Lock() //{{{1
-	{ 
-		ASSERT( sizeof(pthread_mutex_t*) == sizeof(lock_type*) ); 
-		pthread_mutex_init((pthread_mutex_t*)&m_lock, NULL);
+	{ 	
+		ASSERT( sizeof(pthread_mutex_t*) == sizeof(lock_type) ); 
+		m_lock = new pthread_mutex_t;
+		pthread_mutex_init((pthread_mutex_t*)m_lock, NULL);
 	}
 
-	Lock::~Lock()       { pthread_mutex_destroy((pthread_mutex_t*)&m_lock); }
-	void Lock::lock()   { pthread_mutex_lock((pthread_mutex_t*)&m_lock); }
-	void Lock::unlock() { pthread_mutex_unlock((pthread_mutex_t*)&m_lock); }
+	Lock::~Lock()       { pthread_mutex_destroy((pthread_mutex_t*)m_lock); delete (pthread_mutex_t*)m_lock; }
+	void Lock::lock()   { pthread_mutex_lock((pthread_mutex_t*)m_lock); }
+	void Lock::unlock() { pthread_mutex_unlock((pthread_mutex_t*)m_lock); }
+
+	CondVar::CondVar()
+	{
+	  m_cv = new pthread_cond_t;
+	  pthread_cond_init((pthread_cond_t*)m_cv, NULL);
+	}
+	CondVar::~CondVar()
+	{
+	  pthread_cond_destroy((pthread_cond_t*)m_cv);
+	}
+	void CondVar::wait(Lock& in_l)
+	{
+	  pthread_cond_wait((pthread_cond_t*)m_cv,(pthread_mutex_t*)in_l.m_lock);
+	}
+	void CondVar::broadcast()
+	{
+	  pthread_cond_broadcast((pthread_cond_t*)m_cv);
+	}
 	//}}}
 }
 
