@@ -189,6 +189,9 @@ void Simul::main() //{{{1
 	start.value = true;
 	numBallsIn.value = 0;
 
+	gp2top.value = calcGP2top(m_field, pose.value);
+	gp2top.publish();
+
 	// Ester
 	int n = 0;
 	floorColor.value[n++] = Point(Milim( 14), Milim( 96));
