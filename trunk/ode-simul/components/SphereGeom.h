@@ -14,7 +14,7 @@
 class SphereGeom : public Geom
 {
 	public:
-		SphereGeom(Body* in_pBody, World* in_pWorld, double radius);
+		SphereGeom(Body* in_pBody, Space* in_pSpace, double radius);
 		virtual ~SphereGeom() {}
 };
 

@@ -14,7 +14,7 @@
 class BoxGeom : public Geom
 {
 	public:
-		BoxGeom(Body* in_pBody, World* in_pWorld, double x, double y, double z);
+		BoxGeom(Body* in_pBody, Space* in_pSpace, double x, double y, double z);
 		virtual ~BoxGeom() {}
 };
 

@@ -11,13 +11,14 @@
 #include <ode/ode.h>
 #include "ContactData.h"
 #include "World.h"
+#include "Space.h"
 
 class Body;
 
 class Geom 
 {
 	public:
-		Geom(World* in_pWorld);
+		Geom(Space* in_pSpace);
 		virtual ~Geom();
 		void setMass(double in_mass);
 		ContactData m_contactData;
@@ -25,7 +26,7 @@ class Geom
 	protected:
 		void finishGeom();
 		dGeomID m_id;
-		dSpaceID m_spaceID;
+		Space* m_pSpace;
 		Body* m_pBody;
 		dMass m_mass;
 

@@ -11,6 +11,7 @@
 #include <ode/ode.h>
 #include "number/time.h"
 
+class Space;
 class Geom;
 
 class World
@@ -20,11 +21,11 @@ class World
 		~World();
 		void setGravity(double x, double y, double z);
 		void step(num::Time in_interval);
-		dSpaceID getSpaceID() {return m_spaceID;}
+		Space* getSpace() {return m_space;}
 		dWorldID getID() { return m_id; }
 	private:
 	  dWorldID m_id;
-		dSpaceID m_spaceID;
+		Space* m_space;
 		dJointGroupID m_contactID;
 		Geom* m_ground;
 		static void nearCallback(void *data, dGeomID o1, dGeomID o2);

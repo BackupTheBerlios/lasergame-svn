@@ -15,9 +15,9 @@ namespace {
 	class Plane : public Geom
 	{
 		public:
-			Plane(World& in_world) : Geom(&in_world)
+			Plane(Space* in_pSpace) : Geom(in_pSpace)
 			{
-				m_id = dCreatePlane(m_spaceID,0,0,1,0);
+				m_id = dCreatePlane(m_pSpace->id(),0,0,1,0);
 				dGeomSetData(m_id, this);
 			}
 	};
@@ -50,9 +50,10 @@ void World::nearCallback(void *data, dGeomID o1, dGeomID o2)
 		Geom *geom1, *geom2;
 		geom1 = (Geom*) dGeomGetData(o1);
 		geom2 = (Geom*) dGeomGetData(o2);
-		//std::cout << "cd1->mu is: " << geom1->m_contactData.mu << ", cd2->mu is: " << geom2->m_contactData.mu << std::endl;
+		//std::cout << "cd1->mu is: " << geom1->m_contactData.mu << ", cd2->mu is: " << geom2->m_contactData.mu << " -> ";
 		double mu = (geom1->m_contactData.mu < geom2->m_contactData.mu ? 
 				geom1->m_contactData.mu : geom2->m_contactData.mu);
+		//std::cout << mu << std::endl;
 
 		// add these contact points to the simulation
 		if (n > 0) {
@@ -71,16 +72,16 @@ void World::nearCallback(void *data, dGeomID o1, dGeomID o2)
 World::World()
 {
 	m_id = dWorldCreate();
-	m_spaceID = dHashSpaceCreate(0);
+	m_space = new HashSpace();
 	m_contactID = dJointGroupCreate(0);
-	m_ground = new Plane(*this);
+	m_ground = new Plane(m_space);
 }
 
 World::~World()
 {
 	delete m_ground;
 	dJointGroupDestroy(m_contactID);
-	dSpaceDestroy(m_spaceID);
+	delete m_space;
 	dWorldDestroy(m_id);
 }
 
@@ -91,7 +92,7 @@ void World::setGravity(double x, double y, double z)
 
 void World::step(Time in_interval)
 {
-	dSpaceCollide(m_spaceID,this,&nearCallback);
+	dSpaceCollide(m_space->id(),this,&nearCallback);
 	dWorldStep(m_id, in_interval.ms()/1000.0);
 	dJointGroupEmpty(m_contactID);
 }

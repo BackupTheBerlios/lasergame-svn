@@ -9,7 +9,7 @@
 #include "Geom.h"
 #include "Body.h"
 
-Geom::Geom(World* in_pWorld) : m_id(0), m_spaceID(in_pWorld->getSpaceID()),
+Geom::Geom(Space* in_pSpace) : m_id(0), m_pSpace(in_pSpace),
 															 m_pBody(0)
 {
 }

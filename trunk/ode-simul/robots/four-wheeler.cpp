@@ -58,7 +58,7 @@ void FourWheeler::create(World* in_world, Pose in_pose)
 
   m_pChassis = new Body(in_world);
 	m_pChassis->setPosition(in_pose.x().m(),in_pose.y().m(),STARTZ().m());
-	m_pChassisBox = new BoxGeom(m_pChassis, in_world, ROBOT_LENGTH().m(),ROBOT_WIDTH().m(),ROBOT_HEIGHT().m());
+	m_pChassisBox = new BoxGeom(m_pChassis, in_world->getSpace(), ROBOT_LENGTH().m(),ROBOT_WIDTH().m(),ROBOT_HEIGHT().m());
 	m_pChassisBox->setMass(CHASSIS_MASS());
 
 	m_wheels = new Body[4];
@@ -69,7 +69,7 @@ void FourWheeler::create(World* in_world, Pose in_pose)
 		dQuaternion q;
 		dQFromAxisAndAngle (q,1,0,0,M_PI*0.5);
 		m_wheels[i].setQuaternion(q);
-		Geom* geom = new SphereGeom(&m_wheels[i], in_world, RADIUS().m());
+		Geom* geom = new SphereGeom(&m_wheels[i], in_world->getSpace(), RADIUS().m());
 		geom->setMass(WMASS());
     // Magic number (see Pisvejc): make it too big, and turning won't be possible, make it too small, and 
 		// robot will just stay on place, regardless of how fast wheels are turning
@@ -135,7 +135,7 @@ void FourWheeler::update(const Time& in_timeChange)
 		  m_joints[i]->setParam(dParamVel2,speedR/RADIUS().m()*-1);
 		m_joints[i]->setParam(dParamFMax2,FMAX());
 
-		cout << m_joints[i]->getAngle2Rate() << ",";
+		cout << m_joints[i]->getAngle2Rate() * RADIUS().m() * -1 << ",";
 #if 0
 		dBodyEnable(m_joints[i].getBody(0));
 		dBodyEnable(m_joints[i].getBody(1));
