@@ -12,4 +12,5 @@ namespace {
   }
 };
 
-#endif // _UTIL_H_
+#endif // UTIL_UTIL_H_INCLUDED
+

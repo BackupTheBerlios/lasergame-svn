@@ -16,7 +16,6 @@ class PoseChange : public Driver
 {
 	public:
 		PoseChange(const Params& in_params) : Driver(in_params) {}
-		//PoseChange(msg::Channel* in_p, int in_id, msg::Channel* in_done) : Driver(in_p, in_id, in_done) {}
 		virtual void main()
 		{
 			using namespace msg;

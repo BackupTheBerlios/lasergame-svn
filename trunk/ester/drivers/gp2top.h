@@ -7,6 +7,7 @@
 
 #include "drivers.h"
 #include "number/pose.h"
+#include "../field.h"
 
 namespace drivers {
 

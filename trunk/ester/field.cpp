@@ -44,13 +44,13 @@ Field::Field(int in_flags) : m_score(0), m_verbose(false) //{{{1
 
 Field::~Field() {} //{{{1
 
-void Field::setRobot(const int in_id, const num::Pose& in_pose)
+void Field::setRobot(const int in_id, const num::Pose& in_pose) //{{{1
 {
 	ASSERT( in_id == 0 || in_id == 1 );
 	m_robot[in_id] = in_pose;
 }
 
-const num::Pose& Field::getRobot(const int in_id) 
+const num::Pose& Field::getRobot(const int in_id) //{{{1
 { 
 	ASSERT( in_id == 0 || in_id == 1 );
 	return m_robot[in_id]; 
