@@ -3,64 +3,73 @@
 
 /**
  * @file 
- *     Message declaration and documentation.
+ *     Message sending & receiving infrastracture
  *          
  * @author Zbynek Winkler (c) 2004
  * 
  * $Id$
  */
 
-#include "msg/task.h"
-
 namespace msg
 {
-	/// Abstract class for all messages
-	class Message
-	{
-		public:
-			/// Empty, to ensure proper deletition.
-			virtual ~Message() {}
-	};
+	class SubsBase;
 
-	class Subs
+	class TaskItemBase
 	{
-		public:
-			static Subs& get(const char * in_name) { static Subs s; return s; }
-			void remove(Message *) {}
-	};
-
-	template <class T> class MessageImpl : public T
-	{
-		private:
-			/// Parent Task
-			task::Task& m_task;
-			/// 
-			Subs& m_subs;
+		protected:
+			SubsBase* m_subs;
 		
 		public:
-			/// Subscribes itself to the in_name
-			MessageImpl(const char* in_name) : m_task(task::current()), m_subs(Subs::get(in_name))
+			TaskItemBase(SubsBase* in_targetSubs) : m_subs(in_targetSubs) {}
+			virtual void assign() = 0;
+			virtual ~TaskItemBase() {}
+			bool isFor(SubsBase* in_subs) { return m_subs == in_subs; }
+	};
+
+	template <class T> class TaskItem : public TaskItemBase
+	{
+		T m_data;
+		
+		public:
+			TaskItem(SubsBase* in_targetSubs, const T & in_data) 
+				: TaskItemBase(in_targetSubs), m_data(in_data)
 			{
 			}
-			
-			/// Unsubscribes itself
-			virtual ~MessageImpl()
+			virtual void assign(); // defined later in this file
+	};
+
+	class SubsList;
+	
+	class SubsBase
+	{
+		SubsList& m_subList;
+		public:
+			SubsBase(const char* in_name);
+			virtual ~SubsBase();
+			virtual TaskItemBase* createTaskItem(SubsBase* in_targetSubs) const = 0;
+			void publish() const;
+	};
+
+	template <class T> class Subs : public SubsBase
+	{
+		public: // because of a bug in msvc-7.1
+			T m_data;
+
+		public:
+			Subs(const char* in_name) : SubsBase(in_name) {}
+			operator T& () { return m_data; }
+			virtual TaskItemBase* createTaskItem(SubsBase* in_targetSubs) const
 			{
-				m_subs.remove(this);
-			}
-			
-			/// Sends out a copy of itself to all members of the same Queue
-			void publish() const
-			{
-#if 0
-				for (Subs::iter i = m_subs.begin(); i != m_subs.end(); i++)
-				{
-					if (*i != this)
-						i->m_task.enqueueMessage(new T(*this));
-				}
-#endif
+				return new TaskItem<T>(in_targetSubs, m_data);
 			}
 	};
+	
+	template <class T> void TaskItem<T>::assign()
+	{
+		dynamic_cast<Subs<T>*>(m_subs)->m_data = m_data;
+	}
+
+	void wait();
 }
 
 #endif // MSG_H_INCLUDED

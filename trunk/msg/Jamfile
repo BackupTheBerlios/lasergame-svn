@@ -1,7 +1,7 @@
 project msg ;
 
 obj msg : msg.cpp ;
-obj task : task.cpp ;
+#obj task : task.cpp ;
 
-my-test msg-test : msg-test.cpp msg task ;
+my-test msg-test : msg-test.cpp msg /util//thread ;
 

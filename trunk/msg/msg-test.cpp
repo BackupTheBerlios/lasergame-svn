@@ -1,10 +1,11 @@
+//#include <iostream>
 #include "util/unit-test.h"
 #include "msg/msg.h"
-#include "msg/task.h"
+using namespace std;
 
 namespace
 {
-	class Int : public msg::Message
+	class Int
 	{
 		int m_int;
 		public:
@@ -15,15 +16,15 @@ namespace
 
 	AUTOTEST(test1)
 	{
-		msg::MessageImpl<Int> sender("number");
-		msg::MessageImpl<Int> receiver("number");
-		msg::MessageImpl<Int> nonReceiver("number1");
+		msg::Subs<Int> sender("number");
+		msg::Subs<Int> receiver("number");
+		msg::Subs<Int> nonReceiver("aaa");
 
-		REQUIRE( receiver == 0 );
-		sender.set(5);
+		REQUIRE( Int(receiver) == 0 );
+		Int(sender).set(5);
 		sender.publish();
-		task::wait();
-		REQUIRE( receiver == 5 );
+		msg::wait();
+		REQUIRE( Int(receiver) == 5 );
 	}
 }
 
