@@ -1,0 +1,12 @@
+project 
+	: requirements 
+		<include>.
+		<variant>debug:<define>_DEBUG
+		<toolset>msvc:<cxxflags>/W3
+	: build-dir _build 
+	;
+
+build-project util ;
+
+#unit-test test : /util//thread main.cpp Action.cpp ;
+
