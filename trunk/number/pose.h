@@ -154,7 +154,7 @@ public:
 	void set(const PoseT& in_pos, Rnd & in_rnd, const DistT<T>& in_posNoise, const Angle& in_angleNoise) //{{{2
 	{
 		m_point.x() = in_pos.x() + in_posNoise * in_rnd();
-		m_point.x() = in_pos.y() + in_posNoise * in_rnd();
+		m_point.y() = in_pos.y() + in_posNoise * in_rnd();
 		m_heading = in_pos.m_heading + in_angleNoise * in_rnd();
 	}
 

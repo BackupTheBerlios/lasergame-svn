@@ -14,6 +14,25 @@ using namespace num;
 #include <iostream>
 using namespace std;
 
+AUTOTEST(testConstruct) //{{{1
+{
+	Pose p(Milim(100), Milim(100), Deg(45));
+	REQUIRE( p.x().eq(Milim(100)) );
+	REQUIRE( p.y().eq(Milim(100)) );
+	REQUIRE( p.heading().eq(Deg(45)) );
+
+	p.set(Milim(200), Milim(200), Deg(90));
+	REQUIRE( p.x().eq(Milim(200)) );
+	REQUIRE( p.y().eq(Milim(200)) );
+	REQUIRE( p.heading().eq(Deg(90)) );
+
+	Pose p1;
+	p1.set(p, Rnd(), Milim(100), Deg(10));
+	REQUIRE( p1.x().eq(Milim(200), Milim(100)) );
+	REQUIRE( p1.y().eq(Milim(200), Milim(100)) );
+	REQUIRE( p1.heading().eq(Deg(90), Deg(10)) );
+}
+
 AUTOTEST(testOffset) //{{{1
 {
 	double e = 1e-4;
