@@ -15,20 +15,19 @@ class Field : public thread::Lock
 	private:
 		num::Pose m_robot[2];
 		int m_score;
-		num::Point m_palm1;
-		num::Point m_palm2;
+		num::Point m_palm[2];
 
 		uint32_t m_ballSeed;
 		uint32_t m_palmSeed;
 		bool m_verbose;
 
-		num::Dist  m_minPalmDist;
-		num::Point m_minPalmPose;
-		num::Time  m_minPalmTime;
-		num::Dist  m_minEnemyDist;
-		num::Point m_minEnemyPose;
-		num::Time  m_minEnemyTime;
-		num::Time  m_lastHitTime;
+		num::Dist  m_minPalmDist[2];
+		num::Pose m_minPalmPose[2];
+		//num::Time  m_minPalmTime; // ??? TODO
+		//num::Dist  m_minEnemyDist;
+		//num::Point m_minEnemyPose;
+		//num::Time  m_minEnemyTime;
+		num::Time  m_lastHitTime[2];
 	
 		enum { BALL_COUNT=2*4, RAND_PALM=1, RAND_BALL=2, ERROR=4, VERBOSE=8 };
 
@@ -47,9 +46,10 @@ class Field : public thread::Lock
 
 		void checkPalms(const num::Point & in_p);
 		void checkEnemy(const num::Point & in_p);
+		void updateStat();
 
-		num::Dist palm1Dist(const num::Point & in_p) const { return m_palm1.distanceTo(in_p); }
-		num::Dist palm2Dist(const num::Point & in_p) const { return m_palm2.distanceTo(in_p); }
+		num::Dist palm1Dist(const num::Point & in_p) const { return m_palm[0].distanceTo(in_p); }
+		num::Dist palm2Dist(const num::Point & in_p) const { return m_palm[1].distanceTo(in_p); }
 
 		int tryEatBall(const num::Pose & in_pose, const num::Dist & BALL_EAT_DIST);
 		void shootBall(const num::Pose & in_pose);

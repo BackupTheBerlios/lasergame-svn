@@ -59,6 +59,7 @@ void Manager::main() //{{{1
 		waitForDrivers(driverDone);
 		
 		// uses internal m_pose[2] set by pose driver, gathers statistics
+		m_field.updateStat();
 		//m_field.checkPalms();
 		//m_field.checkEnemy();
 	}

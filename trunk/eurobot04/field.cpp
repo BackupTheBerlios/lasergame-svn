@@ -68,8 +68,8 @@ void Field::setPalm(int in_crossingX, int in_crossingY) //{{{1
 		in_crossingX = 8 - in_crossingX;
 		in_crossingY = 7 - in_crossingY;
 	}
-	m_palm1 = Point(measures::TILE() * in_crossingX, measures::TILE() * in_crossingY );
-	m_palm2 = Point(measures::TILE() * (8 - in_crossingX), measures::TILE() * (7 - in_crossingY));
+	m_palm[0] = Point(measures::TILE() * in_crossingX, measures::TILE() * in_crossingY );
+	m_palm[1] = Point(measures::TILE() * (8 - in_crossingX), measures::TILE() * (7 - in_crossingY));
 }
 
 void Field::randPalm(uint32_t in_seed) //{{{1
@@ -133,7 +133,7 @@ void Field::setBall(int in_pos1, int in_pos2, int in_pos3) //{{{1
 		Coords position((i / 6) + 2, (i % 6) + 1);
 		if (position.x == 2 && position.y == 5)
 			continue; // skip fixed ball positions
-		if ((TILE()*position.x).eq(m_palm1.x()) && (TILE()*position.y).eq(m_palm1.y()))
+		if ((TILE()*position.x).eq(m_palm[0].x()) && (TILE()*position.y).eq(m_palm[0].y()))
 			continue; // skip position where are the palms
 		cards[curCard++] = position;
 	}
@@ -186,8 +186,23 @@ void Field::printStat() //{{{1
 #endif
 }
 
+void Field::updateStat() //{{{1
+{
+	for (int i=0; i < 2; i++)
+		for (int j=0; j < 2; j++)
+		{
+			Dist d = m_robot[i].point().distanceTo(m_palm[j]);
+			if (d < m_minPalmDist[i])
+			{
+				m_minPalmDist[i] = d;
+				m_minPalmPose[i] = m_robot[i];
+			}
+		}
+}
+
 void Field::checkPalms(const Point & in_p) //{{{1
 {
+#if 0
 	if (in_p.distanceTo(m_palm1) < m_minPalmDist)
 	{
 		m_minPalmDist = in_p.distanceTo(m_palm1);
@@ -200,6 +215,7 @@ void Field::checkPalms(const Point & in_p) //{{{1
 		m_minPalmPose = in_p;
 		//m_minPalmTime = m_timeChange.m_time;
 	}
+#endif
 }
 
 void Field::checkEnemy(const Point & in_p) //{{{1
