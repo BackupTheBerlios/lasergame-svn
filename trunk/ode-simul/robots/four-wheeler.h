@@ -19,6 +19,7 @@ class dBody;
 class dBox;
 class dHinge2Joint;
 class dSphere;
+class Space;
 
 class FourWheeler : public OdeRobot
 {
@@ -36,6 +37,7 @@ class FourWheeler : public OdeRobot
 		BoxGeom* m_pChassisBox;
 		Hinge2Joint* m_joints[4];
 		Body* m_wheels;
+		Space* m_pSpace;
 
 };
 

@@ -18,6 +18,7 @@
 #include "../components/BoxGeom.h"
 #include "../components/SphereGeom.h"
 #include "../components/Hinge2Joint.h"
+#include "../components/Space.h"
 
 using namespace num;
 using namespace std;
@@ -56,9 +57,11 @@ void FourWheeler::create(World* in_world, Pose in_pose)
 
 	pose.value = in_pose;
 
+	m_pSpace = new SimpleSpace(in_world->getSpace());
+
   m_pChassis = new Body(in_world);
 	m_pChassis->setPosition(in_pose.x().m(),in_pose.y().m(),STARTZ().m());
-	m_pChassisBox = new BoxGeom(m_pChassis, in_world->getSpace(), ROBOT_LENGTH().m(),ROBOT_WIDTH().m(),ROBOT_HEIGHT().m());
+	m_pChassisBox = new BoxGeom(m_pChassis, m_pSpace, ROBOT_LENGTH().m(),ROBOT_WIDTH().m(),ROBOT_HEIGHT().m());
 	m_pChassisBox->setMass(CHASSIS_MASS());
 
 	m_wheels = new Body[4];
@@ -69,7 +72,7 @@ void FourWheeler::create(World* in_world, Pose in_pose)
 		dQuaternion q;
 		dQFromAxisAndAngle (q,1,0,0,M_PI*0.5);
 		m_wheels[i].setQuaternion(q);
-		Geom* geom = new SphereGeom(&m_wheels[i], in_world->getSpace(), RADIUS().m());
+		Geom* geom = new SphereGeom(&m_wheels[i], m_pSpace, RADIUS().m());
 		geom->setMass(WMASS());
     // Magic number (see Pisvejc): make it too big, and turning won't be possible, make it too small, and 
 		// robot will just stay on place, regardless of how fast wheels are turning
@@ -110,6 +113,7 @@ void FourWheeler::destroy()
 	  delete m_joints[i];
 	delete m_pChassisBox;
 	delete m_pChassis;
+	delete m_pSpace;
 }
 
 Pose calcPoseChange(const Speed & in_speed, const Time & in_dt) //{{{1
