@@ -158,6 +158,7 @@ Simul::Simul(msg::Channel* in_p, Field* in_field, int in_side) //{{{1
 		
 		m_start       (in_p, "start"),
 		m_ballPos     (in_p, "ball"),
+		m_enemy       (in_p, "enemy"),
 		m_floorColor  (in_p, "floor-color"),
 		m_numBallsIn  (in_p, "num-balls-in"),
 		m_gp2top      (in_p, "gp2top"),
@@ -224,12 +225,22 @@ void Simul::main() //{{{1
 			m_ballPos.publish();
 		}
 		
-		//upCamera();
-		//upEnemy();
-		//checkPalms();
-		//checkEnemy();
+		m_enemy.value = m_pose.value.offsetTo(m_field.enemy());
+		m_enemy.publish();
+
+		m_field.checkPalms(m_pose.value.point());
+		m_field.checkEnemy(m_pose.value.point());
 	}
 }
+
+void Simul::reqSpeed() //{{{1
+{
+	//cout << "Speed received... " << m_reqSpeed.value.m_linear.mm() << endl;
+}
+
+void Simul::reqShoot() //{{{1
+{
+}//}}}1
 
 #if 0
 void Simul::setError(const Angle::type& in_ae, const Dist::type& in_fe, const Angle::type& in_de)//{{{1
@@ -240,14 +251,6 @@ void Simul::setError(const Angle::type& in_ae, const Dist::type& in_fe, const An
 }
 #endif
 
-void Simul::reqSpeed() //{{{1
-{
-	//cout << "Speed received... " << m_reqSpeed.value.m_linear.mm() << endl;
-}
-
-void Simul::reqShoot() //{{{1
-{
-}
 
 #if 0
 void EsterSimul::upBalls() //{{{1
@@ -286,17 +289,6 @@ void EsterSimul::upBalls() //{{{1
 		}
 	}
 }
-
-void EsterSimul::upEnemy() //{{{
-{
-  if (!m_checkEnemy)
-    return;
-  m_enemy.m_time = m_timeChange.m_time;
-  m_enemy.m_off = m_pose.m_pose.offsetTo(m_enemyPosition);
-}
-
-
-
 //}}}
 
 #endif

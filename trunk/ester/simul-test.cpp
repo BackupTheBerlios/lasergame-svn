@@ -149,6 +149,31 @@ AUTOTEST(testFloorColor) //{{{1
 	// TODO who to test this further?
 }
 
+AUTOTEST(testTruePose) //{{{1
+{
+	Subs<int> dir;
+	Subs<Time> dt(dir, "time-change");
+	Subs<int> watchdog(dir, "watchdog");
+	Subs<Pose> pose(dir, "true-pose");
+	Subs<Speed> req(dir, "speed-requested");
+
+	Field field;
+	Task e(Simul::fac(dir, &field, 0));
+	waitFor(dt);         // wait until simulator is ready
+	
+	Time t = Sec(1);
+	req.value.m_linear = Meter(1);
+	req.publish();
+	while( t.gt() )
+	{
+		t -= dt.value;
+		//cout << t.ms() << ": " << pose.value << endl;
+		watchdog.publish();  // step forward
+		waitFor(dt);
+	}
+	REQUIRE( pose.value.x() > Milim(500) );
+}
+
 AUTOTEST(testGP2) //{{{1
 {
 	Subs<int> dir;
@@ -230,47 +255,25 @@ AUTOTEST(testCamera) //{{{1
 	REQUIRE( ball.value.x().eq(Milim(560), Milim(20)) );
 	REQUIRE( ball.value.y().eq(Dist(), Milim(20)) );
 }
+
+AUTOTEST(testEnemy) //{{{1
+{
+	Subs<int> dir;
+	Subs<Time> dt(dir, "time-change");
+	Subs<int> watchdog(dir, "watchdog");
+	Subs<Point> enemy(dir, "enemy");
+	
+	Field field;
+	Task e(Simul::fac(dir, &field, 0));
+	waitFor(dt);         // wait until simulator is ready
+	watchdog.publish();  // make step
+	waitFor(enemy);      // wait for the message to come in
+	
+	// TODO who to test this further?
+}
+
+
 //}}}
 
-#if 0
-//{{{1 testTruePose()
-struct TestTruePose : public Action //{{{2
-{
-	virtual int main()
-	{
-		using num::Milim; using num::Deg; using num::Sec; using num::Time; using num::ASpeed; using num::Meter;
-		msg::Speed requestedSpeed;
-		Regs r1("cz.robotika.ester.requested_speed", &requestedSpeed);
-		msg::TimeChange dt;
-		msg::Pose pose;
-		Subs s1("time_change", &dt);
-		Subs s2("cz.robotika.ester.true_pose", &pose);
-		execute();
-
-		Time t = Sec(1);
-		requestedSpeed.m_time = dt.m_time;
-		requestedSpeed.m_v = Meter(1);
-		while( t.gt() )
-		{
-			t -= dt.m_dt;
-			//cout << t.ms() << ": " << pose.m_pose.x().mm() << endl;
-			execute();
-		}
-		ASSERT( pose.m_pose.x() > Milim(500) );
-		return 0;
-	}
-};
-
-AUTOTEST(testTruePose) //{{{2
-{
-	EsterSimul t2;
-	TestTruePose t3;
-	g_main.waitForAny();
-}
-//}}}
-
-}
-//}}}1
-#endif
 } // namespace
 

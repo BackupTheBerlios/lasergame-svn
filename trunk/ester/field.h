@@ -51,6 +51,8 @@ class Field
 
 		int tryEatBall(const num::Pose & in_pose, const num::Dist & BALL_EAT_DIST);
 		
+		const num::Point & enemy() { return m_enemy; }
+
 		Balls m_balls;
 };
 
