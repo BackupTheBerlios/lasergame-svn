@@ -40,6 +40,7 @@ public:
 	LinearSpeed& operator /= (const Dist::type& n) { m_dist /= n; return *this; }
 	friend Time operator / (const Dist& d, const LinearSpeed& f);
 	int mm() const { return m_dist.mm(); }
+	double m() const { return m_dist.m(); }
 };
 
 inline Time operator / (const Dist& d, const LinearSpeed& f) //{{{2

@@ -1,6 +1,14 @@
 #ifndef ANGLE_H_INCLUDED
 #define ANGLE_H_INCLUDED 1
 
+/** @file
+*         %Angle, Rad and Deg definition.
+*         
+* @author Zbynek Winkler (c) 2003, 2004 <zw at robotika cz>
+*
+* $Id$
+*/
+
 #include "util/math.h"
 
 namespace num

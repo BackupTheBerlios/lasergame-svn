@@ -7,7 +7,7 @@
 */
 
 #include "util/unit-test.h"
-#include "time.h"
+#include "speed.h"
 using namespace num;
 
 #include <iostream>
@@ -15,6 +15,9 @@ using namespace std;
 
 AUTOTEST(test1) //{{{1
 {
+	LinearSpeed l;
+	l = Milim(300);
+	REQUIRE( l.mm() == Milim(300).mm() );
 #if 0
 	double v = 3.7;        // m/s == pocatecni rychlost
 	double b = 3.7;        // konstanta
