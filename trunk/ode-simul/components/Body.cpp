@@ -8,6 +8,8 @@
 
 #include <ode/ode.h>
 
+#include "util/assert.h"
+
 #include "World.h"
 #include "Body.h"
 #include "Geom.h"
@@ -27,10 +29,7 @@ Body::~Body()
 
 void Body::create(World* in_pWorld)
 {
-	delete m_geom;
-	m_geom = 0;
-	if (m_id)
-		dBodyDestroy(m_id);
+	ASSERT( m_id == 0 );
 	m_id = dBodyCreate(in_pWorld->getID());
 }
 
