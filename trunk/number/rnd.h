@@ -19,18 +19,20 @@ namespace num {
 template <class T> class RndT //{{{1
 {
 	uint32_t m_seed;
+
+protected:
+	uint32_t rand() { return (((m_seed = m_seed * 214013L + 2531011L) >> 16) & 0x7fff); }
+	
 public:
 	RndT() : m_seed(1) {}
 	T operator () () { return uniform(); }
 	T uniform()
 	{
-		uint32_t r = (((m_seed = m_seed * 214013L + 2531011L) >> 16) & 0x7fff);
-		return make<T>(2*r, 0x7fff+1)-1;
+		return make<T>(2*rand(), 0x7fff+1)-1;
 	}
 	double uniformD()
 	{
-		double r = (((m_seed = m_seed * 214013L + 2531011L) >> 16) & 0x7fff);
-		return 2*r / ((double)0x7fff+1) - 1;
+		return 2*rand() / ((double)0x7fff+1) - 1;
 	}
 	void setSeed(uint32_t a_seed)
 	{
