@@ -4,12 +4,13 @@
 #include "number/pose.h"
 #include "number/dist.h"
 #include "number/time.h"
+#include "util/thread.h"
 
 #include <list>
 
 class Balls : public std::list<num::Point> {};
 
-class Field
+class Field : public thread::Lock
 {
 	private:
 		num::Point m_enemy;

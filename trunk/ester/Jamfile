@@ -9,7 +9,7 @@ libs = /util//thread /util//msg /util//conf ;
 #lib controller : EsterSimul Move EsterUSB MCL /cam//cam /mcl//mcl $(libs) : <link>static ;
 
 unit-test measures-test : measures-test.cpp ;
-unit-test field-test : field-test.cpp field.cpp ;
+unit-test field-test : field-test.cpp field.cpp $(libs) ;
 unit-test simul-test : simul-test.cpp simul.cpp field.cpp $(libs) ;
 
 #my-test move-test : MoveTest.cpp Move EsterSimul $(libs) ;
