@@ -12,14 +12,16 @@
 #include "util/msg.h"
 #include "number/pose.h"
 #include "number/time.h"
+#include "number3D/pose3D.h"
 
 class World;
  
 class OdeObject
 {
 	public:
-		virtual void create(World* in_world, num::Pose in_pose) = 0;
+		virtual void create(World* in_world, num3D::Pose3D in_pose) = 0;
 		virtual void destroy() = 0;
+		virtual num::Pose getPosition() = 0;
 };
 
 #endif

@@ -22,6 +22,7 @@
 
 using namespace num;
 using namespace std;
+using namespace num3D;
 
 
 namespace {
@@ -49,8 +50,11 @@ void FourWheeler::reqSpeed(num::Speed& in_speed) //{{{1
 
 
 
-void FourWheeler::create(World* in_world, Pose in_pose)
+void FourWheeler::create(World* in_world, Pose3D in_pose3D)
 {
+	// TODO use full position data
+	Pose in_pose(in_pose3D.point().x(), in_pose3D.point().y(), Deg(0));
+	
 	msg::Subs<num::Pose> pose(m_pChannel,"true-pose");
 	msg::Subs<num::Speed, FourWheeler> reqSpeed(m_pChannel,"speed-requested", this, &FourWheeler::reqSpeed);
 	msg::Subs<num::Speed> currentSpeed(m_pChannel, "speed-current");
@@ -163,4 +167,11 @@ void FourWheeler::update(const Time& in_timeChange)
 	m_poseChange.value = calcPoseChange(m_currentSpeed.value,in_timeChange);
 	cout << "Current pose change is: " << m_poseChange.value <<endl;
 	m_poseChange.publish();
+}
+
+num::Pose FourWheeler::getPosition()
+{
+	double pos[3]; 
+	m_pChassis->getPosition(pos);
+	return Pose(Meter(pos[0]),Meter(pos[1]),m_pChassis->getOrientation2D());
 }

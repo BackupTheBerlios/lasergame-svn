@@ -18,6 +18,7 @@
 #include "ContactData.h"
 
 #include "components/World.h"
+#include "number3D/pose3D.h"
 
 class OdeSimul : public msg::Runnable
 {
@@ -27,12 +28,15 @@ class OdeSimul : public msg::Runnable
 		OdeSimul(msg::Channel* in_pChannel);
 		~OdeSimul();
 		void addRobot(OdeRobot* in_pRobot);
+		void addRobot(OdeRobot* in_pRobot, const num3D::Pose3D & in_pose);
+		void addObject(OdeObject* in_pObject, const num3D::Pose3D & in_pose);
 
 		virtual void main();
 	private:
 		World* m_pWorld;
 
 		OdeRobot* m_pRobot;
+		std::vector<OdeObject*> m_objects;
 		ContactData m_groundCD;
 		
 };

@@ -14,6 +14,7 @@
 #include "../components/Body.h"
 #include "../components/BoxGeom.h"
 #include "../components/Hinge2Joint.h"
+#include "../number3D/pose3D.h"
 
 class dBody;
 class dBox;
@@ -26,8 +27,9 @@ class FourWheeler : public OdeRobot
   public:
 	  FourWheeler(msg::Channel* in_pChannel);
 	  virtual void update(const num::Time& in_timeChange);
-		virtual void create(World* in_world, num::Pose in_pose);
+		virtual void create(World* in_world, num3D::Pose3D in_pose);
 		virtual void destroy();
+		virtual num::Pose getPosition();
 	private:
 		void reqSpeed(num::Speed& in_speed);
 		msg::Subs<num::Speed, FourWheeler> m_reqSpeed;

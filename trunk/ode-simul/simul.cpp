@@ -12,9 +12,10 @@
 
 using namespace std;
 using namespace num;
+using namespace num3D;
 
 namespace {
-	num::Pose INITIAL_POSITION() { return Pose(Milim(0), Milim(0), Deg(0)); }
+	num3D::Pose3D INITIAL_POSITION() { return Pose3D(Milim(0), Milim(0)); }
 };
 
 OdeSimul::OdeSimul(msg::Channel* in_pChannel) : m_pChannel(in_pChannel) , m_pRobot(0)
@@ -30,8 +31,19 @@ OdeSimul::~OdeSimul()
 
 void OdeSimul::addRobot(OdeRobot* in_pRobot)
 {
+	addRobot(in_pRobot, INITIAL_POSITION());
+}
+
+void OdeSimul::addRobot(OdeRobot* in_pRobot, const num3D::Pose3D & in_pose)
+{
 	m_pRobot = in_pRobot;
-	m_pRobot->create(m_pWorld, INITIAL_POSITION());
+	m_pRobot->create(m_pWorld, in_pose);
+}
+
+void OdeSimul::addObject(OdeObject* in_pObject, const num3D::Pose3D & in_pose)
+{
+	in_pObject->create(m_pWorld, in_pose);
+	m_objects.push_back(in_pObject);
 }
 
 void OdeSimul::main()
