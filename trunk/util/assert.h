@@ -1,6 +1,14 @@
 #ifndef UTIL_ASSERT_H_INCLUDED
 #define UTIL_ASSERT_H_INCLUDED 1
 
+/**
+ * @file
+ *   A way to bridge asserts between MSVC and GNUC 
+ * 
+ * @author Zbynek Winkler (c) 2004
+ * $Id$
+ */
+
 #ifdef _DEBUG
 #	if defined _MSC_VER
 #		include <crtdbg.h>

@@ -1,3 +1,4 @@
+# $Id$
 using testing ;
 
 rule my-test ( name : sources * )
