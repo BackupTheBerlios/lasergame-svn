@@ -154,7 +154,7 @@ namespace msg
 		TaskImpl& m_taskImpl;
 		protected:
 			void subscribe();
-			void subscribe(const char* in_name);
+			void subscribe(Channel* in_parent, const char* in_name);
 			void subscribe(Channel* in_pChannel);
 			void unsubscribe();
 		public:
@@ -167,11 +167,12 @@ namespace msg
 			virtual void assign(void*) = 0;
 			void publish() const;
 			operator Channel* () { return m_pChannel; }
+			void postItem(void* data);
 	};
 
 	namespace detail {
-		// go through the task queue and delete all messages destined to this subs
-		void destroyItemsFor(SubsBase*);
+		/// Go through the task queue and delete all messages destined to the supplied subs
+		void destroyItemsFor(SubsBase* in_subs);
 	}
 
 	template <class T> class Subs : public SubsBase
@@ -181,7 +182,7 @@ namespace msg
 		public:
 			T value;
 			Subs() { subscribe(); }
-			Subs(const char* in_name) { subscribe(in_name); }
+			Subs(Channel* in_parent, const char* in_name) { subscribe(in_parent, in_name); }
 			Subs(Channel* in_pChannel) { subscribe(in_pChannel); }
 			virtual ~Subs() { unsubscribe(); detail::destroyItemsFor(this); }
 			virtual void* create() const { return new T(value); }

@@ -91,13 +91,6 @@ namespace
 
 	class stop {};	//{{{1
 	
-	class AllSubs : public thread::Lock, public std::map< std::string, Channel* > //{{{1
-	{
-		public:
-			Channel* getChannel(const char* in_name);
-	} s_allSubs;
-	
-
 	ulong threadFn(void* in_void) //{{{1
 	{
 		FactoryBase* in_factory = (FactoryBase*)(in_void);
@@ -118,12 +111,74 @@ namespace
 
 namespace msg {
 	
-	class Channel : public std::list<SubsBase*> //{{{1
+	class Channel : public thread::Lock //{{{1
 	{
+		protected:
+			typedef std::map<std::string, Channel*> Children;
+			typedef std::list<SubsBase*> SubsList;
+		private:
+			SubsList m_subs;
+			Children m_children;
 		public:
-			AllSubs::iterator m_self;
-			Channel() : m_self(0) {}
+			virtual ~Channel() {}
+			bool empty() 
+			{ 
+				return m_subs.empty() && m_children.empty(); 
+			}
+			void connect(SubsBase* in_subs) 
+			{
+				if (!m_subs.empty())
+					m_subs.front()->checkType(in_subs); // throws
+				m_subs.push_back(in_subs); 
+			}
+			void disconnect(SubsBase* in_subs)
+			{
+				m_subs.erase(std::find(m_subs.begin(), m_subs.end(), in_subs));
+				// if that was the last subs under the group and there are no subgroups, delete it
+				if (empty())
+					delete this;
+			}
+			void erase(Children::iterator in_child)
+			{
+				m_children.erase(in_child);
+			}
+			Channel* getChannel(const char* in_name);
+			void publish(const SubsBase* in_subs)
+			{
+				for (SubsList::iterator i = m_subs.begin(); i != m_subs.end(); i++)
+				{
+					if (*i != in_subs)
+						(*i)->postItem(in_subs->create()); // locks SubsBase::taskImpl
+				}
+			}
 	};
+
+	class BoundChannel : public Channel //{{{1
+	{
+			friend class Channel;
+			Channel* m_parent;
+			Children::iterator m_self;
+		public:
+			BoundChannel(Channel* in_parent) : m_parent(in_parent), m_self(0) { }
+			virtual ~BoundChannel()
+			{
+				ASSERT( m_parent != 0 );
+				ASSERT( m_self != Children::iterator(0) );
+				m_parent->erase(m_self);
+			}
+	};
+
+	Channel* Channel::getChannel(const char* in_name) //{{{1
+	{
+		Children::iterator ret = m_children.lower_bound(in_name);
+		if (ret == m_children.end() || (*ret).first != in_name)
+		{
+			BoundChannel* bc = new BoundChannel(this);
+			ret = m_children.insert(ret, Children::value_type(in_name, bc));
+			bc->m_self = ret;
+		}
+		return ret->second;
+	}
 
 	SubsBase::SubsBase() : m_pChannel(0), m_taskImpl(*s_impl()) //{{{1
 	{
@@ -133,56 +188,43 @@ namespace msg {
 	{
 		ASSERT( m_pChannel == 0 );
 		m_pChannel = new Channel();
-		m_pChannel->push_back(this);
+		m_pChannel->connect(this);
 	}
 
-	void SubsBase::subscribe(const char * in_name) //{{{1
+	void SubsBase::subscribe(Channel* in_parent, const char * in_name) //{{{1
 	{
 		using namespace std;
 		ASSERT( m_pChannel == 0 );
-		Locker lock(s_allSubs);
-		m_pChannel = s_allSubs.getChannel(in_name);
-		if (!m_pChannel->empty())
-			m_pChannel->front()->checkType(this);
-		m_pChannel->push_back(this);
+		Locker lock(*in_parent);
+		m_pChannel = in_parent->getChannel(in_name);
+		m_pChannel->connect(this);
 	}
 
 	void SubsBase::subscribe(Channel* in_pChannel) //{{{1
 	{
 		ASSERT( m_pChannel == 0 );
-		Locker lock(s_allSubs);
+		Locker lock(*in_pChannel);
 		m_pChannel = in_pChannel;
-		// check type
-		if (!m_pChannel->empty())
-			m_pChannel->front()->checkType(this);
-		m_pChannel->push_back(this);
+		m_pChannel->connect(this);
 	}
 
 	void SubsBase::unsubscribe() //{{{1
 	{
 		ASSERT( m_pChannel != 0 );
-		Locker lock(s_allSubs);
-		// 1. deregister this subs
-		m_pChannel->erase(std::find(m_pChannel->begin(), m_pChannel->end(), this));
-		// 2. if this was the last subs under the group, delete it
-		if (m_pChannel->empty())
-		{
-			if (m_pChannel->m_self != AllSubs::iterator(0))
-				s_allSubs.erase(m_pChannel->m_self);
-			delete m_pChannel;
-		}
+		Locker lock(*m_pChannel);
+		m_pChannel->disconnect(this);
 	}
 
 void SubsBase::publish() const //{{{1
 {
-	Locker lock(s_allSubs);
-	for (std::list<msg::SubsBase*>::iterator i = m_pChannel->begin(); i != m_pChannel->end(); i++)
-	{
-		if (*i != this)
-			(*i)->m_taskImpl.push_back_locked(*i, create()); // thread safe
-	}
+	Locker lock(*m_pChannel);
+	m_pChannel->publish(this);
 }
 
+void SubsBase::postItem(void* in_data)
+{
+	m_taskImpl.push_back_locked(this, in_data); // thread safe
+}
 // remove the item from the top of the current task queue, thread safe, blocking
 // assign the data according to the subscription
 SubsBase* processSubs() //{{{1
@@ -249,13 +291,3 @@ Task::~Task() //{{{1
 //}}}
 } // namespace msg
 
-	Channel* AllSubs::getChannel(const char* in_name) //{{{1
-	{
-		iterator ret = lower_bound(in_name);
-		if (ret == end() || (*ret).first != in_name)
-		{
-			ret = insert(ret, value_type(in_name, new Channel()));
-			(*ret).second->m_self = ret;
-		}
-		return ret->second;
-	}	//}}}
