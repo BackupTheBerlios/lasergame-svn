@@ -110,8 +110,8 @@ double calcGP2top(const Field& in_field, const Pose & in_pose) //{{{1
 //}}}
 }
 
-Simul::Simul(msg::Channel* in_p, Field& in_field, int in_side) //{{{1
-	: m_field(in_field),
+Simul::Simul(msg::Channel* in_p, Field* in_field, int in_side) //{{{1
+	: m_field(*in_field),
 		m_watchdog    (in_p, "watchdog"),
 		m_seed        (in_p, "seed"),
 		m_timeChange  (in_p, "time-change"),
@@ -129,6 +129,7 @@ Simul::Simul(msg::Channel* in_p, Field& in_field, int in_side) //{{{1
 		
 		AERR(0), FERR(0), DERR(0) 
 {
+	ASSERT( in_field != 0 );
 	//m_seed.value = time(NULL);
 	m_seed.value = 1;
 	m_timeChange.value = num::MSec(5);
@@ -177,7 +178,9 @@ void Simul::main() //{{{1
 		m_gp2top.value = calcGP2top(m_field, m_pose.value);
 		m_gp2top.publish();
 		
-		//upBalls();
+		m_numBallsIn.value += m_field.tryEatBall(m_pose.value, BALL_EAT_DIST());
+		m_numBallsIn.publish();
+
 		//upCamera();
 		//upEnemy();
 		//checkPalms();
@@ -206,21 +209,6 @@ void Simul::reqShoot() //{{{1
 #if 0
 void EsterSimul::upBalls() //{{{1
 {
-	using num::Dist;
-	list<Place>::iterator iter;
-
-	for (iter = m_balls.begin(); iter != m_balls.end(); ++iter)
-		if (iter->distanceTo(m_pose.m_pose) <= BALL_EAT_DIST())
-		{
-			cout << "*** Just eaten ball at " << "[" << iter->n() << "]" << endl;
-			m_balls.erase(iter);
-			m_numBallsIn++;
-			break;
-		}
-
-	m_ballIn = m_numBallsIn;
-	m_ballIn.m_time = m_timeChange.m_time;
-
 	if (!m_ballIn)
 		m_reqShoot.m_dist = Dist();
 	else

@@ -1,3 +1,7 @@
+// $Id$
+// Copyright (C) 2004, Zbynek Winkler
+
+///@file
 #ifndef ESTER_SIMUL_H_INCLUDED
 #define ESTER_SIMUL_H_INCLUDED 1
 
@@ -48,8 +52,8 @@ class Simul : public msg::Runnable
 		//int m_camTick;
 		
 	public:
-		Simul(msg::Channel* in_pChannel, Field& in_field, int in_side);
-		static msg::FactoryBase* fac(msg::Channel* in_pChannel, const Field& in_field, int in_side = 0)
+		Simul(msg::Channel* in_pChannel, Field* in_field, int in_side);
+		static msg::FactoryBase* fac(msg::Channel* in_pChannel, Field* in_field, int in_side = 0)
 		{
 			return msg::factory<Simul>(in_pChannel, in_field, in_side);
 		}
