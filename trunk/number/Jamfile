@@ -8,7 +8,7 @@
 #	;
 #
 #my-test fixed-test : FixedPointTest.cpp ;
-#my-test rand-test : RandTest.cpp ;
+unit-test rnd-test : rnd-test.cpp ;
 unit-test dist-test : dist-test.cpp ;
 unit-test angle-test : angle-test.cpp ;
 #unit-test test : test.cpp ;
