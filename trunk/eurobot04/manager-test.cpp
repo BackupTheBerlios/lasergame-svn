@@ -183,7 +183,7 @@ AUTOTEST(testFloorColor) //{{{1
 	Subs<bool> watchdog(dirA, "watchdog");
 	Subs<FloorColor> floorColor(dirA, "floor-color");
 	
-	conf::Robot a("watchdog, ester-speed, pose-change, pose, floor-color");
+	conf::Robot a("watchdog, ester-speed, pose-change, pose, floor-color-ester");
 	conf::Robot b;
 	Field field;
 	Task e(new Manager(field, a, b, dirA, dirB));
