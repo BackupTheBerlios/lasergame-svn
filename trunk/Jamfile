@@ -11,7 +11,7 @@ project
 	: build-dir _build 
 	;
 
-subprojects = util number mcl ester ;
+subprojects = util number mcl eurobot04 ;
 for s in $(subprojects)
 {
 	build-project $(s) ;
