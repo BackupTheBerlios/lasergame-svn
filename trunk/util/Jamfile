@@ -1,4 +1,5 @@
 # $Id$
+
 project util ;
 import os ;
 
@@ -12,6 +13,8 @@ else
 }
 
 #echo [ os.name ] [ os.platform ] [ os.version ] ;
+obj msg : msg.cpp ;
 
 unit-test thread-test : thread thread-test.cpp ;
+unit-test msg-test : msg thread msg-test.cpp ;
 

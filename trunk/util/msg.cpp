@@ -25,7 +25,7 @@
 //#include <iostream>
 #include "util/thread.h"
 #include "util/assert.h"
-#include "msg/msg.h"
+#include "util/msg.h"
 
 namespace msg 
 { 

@@ -1,6 +1,6 @@
 #include <iostream>
 #include "util/unit-test.h"
-#include "msg/msg.h"
+#include "util/msg.h"
 using namespace std;
 
 namespace
