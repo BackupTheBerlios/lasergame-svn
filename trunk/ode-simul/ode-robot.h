@@ -8,22 +8,15 @@
 * $Id$
 */
 
-
-#include "util/msg.h"
-#include "number/pose.h"
-#include "number/time.h"
-
-class World;
+#include "ode-object.h"
  
-class OdeRobot
+class OdeRobot : public OdeObject
 {
 	protected:
 	  msg::Channel* m_pChannel;
 	public:
 	  OdeRobot(msg::Channel* in_pChannel) : m_pChannel(in_pChannel) {}
 	  virtual void update(const num::Time& in_timeChange) = 0;
-		virtual void create(World* in_world, num::Pose in_pose) = 0;
-		virtual void destroy() = 0;
 		virtual ~OdeRobot() {}
 };
 
