@@ -9,15 +9,17 @@ namespace drivers {
 
 class BallManip : public Driver
 {
+	msg::Subs<int>     m_inBalls;
 	public:
 		BallManip(const Params& in_params) : Driver(in_params) {}
 		inline const num::Dist BALL_EAT_DIST() { return num::Milim(60); }
 		virtual void main()
 		{
 			using namespace msg;
-			Subs<num::Pose> pose(m.p, "pose");
-			Subs<int>    inBalls(m.p, "in-balls");
-			Subs<int>       done(m.done);
+			Subs<num::Pose>  pose(m.p, "pose");
+			m_inBalls.subscribe(m.p, "in-balls");
+			Subs<num::Dist, BallManip> shoot(m.p, "shoot", this, &BallManip::shoot);
+			Subs<int>        done(m.done);
 			
 			done.value = m.myID;
 			done.publish();
@@ -30,13 +32,20 @@ class BallManip : public Driver
 					thread::Locker l(m.field);
 					ballsEaten = m.field.tryEatBall(pose.value, BALL_EAT_DIST());
 				}
-				inBalls.value += ballsEaten;
+				m_inBalls.value += ballsEaten;
 				//if (ballsEaten)
-					inBalls.publish();
+					m_inBalls.publish();
 				
 				done.value = m.myID;
 				done.publish();
 			}
+		}
+	private:
+		void shoot(num::Dist& in_dist)
+		{
+			thread::Locker l(m.field);
+			while (m_inBalls.value-- > 0)
+				m.field.shootBall(m.field.getRobot(m.robotID));
 		}
 };
 
