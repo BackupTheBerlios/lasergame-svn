@@ -97,6 +97,7 @@ template <class T> class PoseT //{{{1
 	PointT<T> m_point; ///< origin 
   Angle m_heading; ///< orientation
 public:
+	typedef T type;
 	/// Initializes from supplied values
 	PoseT(const DistT<T> & in_x, const DistT<T> & in_y, const Angle & in_heading) 
 		: m_point(in_x, in_y), m_heading(in_heading) { }
