@@ -1,7 +1,16 @@
 #ifndef NUMBER_DIST_H_INCLUDED
 #define NUMBER_DIST_H_INCLUDED 1
 
+/** @file
+*         %Dist, Milim and Meter definition.
+*         
+* @author Zbynek Winkler (c) 2003, 2004 <zw at robotika cz>
+*
+* $Id$
+*/
+
 #include <ostream>
+#include "number.h"
 
 namespace num
 {
@@ -14,6 +23,7 @@ namespace num
 		/// Just copies the param to m_data
 		explicit DistT(const T & in_num) : m_data(in_num) { }
 	public:
+		typedef T type;
 		/// Initializes to zero distance
 		DistT() : m_data(0) { }
 		//operator T() const { return m_data; }
@@ -80,8 +90,6 @@ namespace num
 	
 		///^2
 		T power() const { return m_data * m_data; };
-	
-		//friend class Place;
 	};
 	
 	/// Initializes DistT from milimeters
@@ -91,7 +99,7 @@ namespace num
 		/// Converts in_mm to the storage format DistT requires
 		MilimT(const T & in_mm) : DistT<T>(in_mm/1000) { }
 		/// Converts in_mm to the storage format DistT requires
-		MilimT(int in_mm) :  DistT<T>(T(in_mm, 1000)) { }
+		MilimT(int in_mm) :  DistT<T>(make<T>(in_mm, 1000)) { }
 		/// Default initialization (initializes to zero distance)
 		MilimT() { }
 	};
@@ -107,11 +115,14 @@ namespace num
 	};
 	
 	//{{{1 DistT friend and static inlines
-	template <typename T> inline DistT<T> DistT<T>::EPSILON() { return MilimT<T>(T(2,10)); }
+	template <typename T> inline DistT<T> DistT<T>::EPSILON() { return MilimT<T>(make<T>(2,10)); }
 	template <typename T> inline double toDouble(const DistT<T> & in) { return toDouble(in.m_data); }
 	template <typename T> inline std::ostream& operator << (std::ostream & o, const DistT<T> & d) 
 	{ return o << d.m(); }
 	//}}}
+	typedef DistT<double> Dist;
+	typedef MilimT<double> Milim;
+	typedef MeterT<double> Meter;
 }
 
 #endif // DIST_H_INCLUDED

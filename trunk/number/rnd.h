@@ -1,13 +1,21 @@
 #ifndef RND_H_INCLUDED
 #define RND_H_INCLUDED
 
+/** @file
+*         %Rnd definition.
+*         
+* @author Zbynek Winkler (c) 2004 <zw at robotika cz>
+*
+* $Id$
+*/
+
 #include <ostream>
 #include <stdint.h>
 
+#include "number.h"
+
 namespace num {
 
-template <class T> T make(const int& a, const int& b) { return T(a)/T(b); }
-	
 template <class T> class RndT //{{{1
 {
 	uint32_t m_seed;
