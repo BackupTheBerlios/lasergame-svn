@@ -110,7 +110,7 @@ void OdeSimul::main()
 		timeChange.publish();
 		waitFor(watchdog);
 		if (m_pRobot)
-			m_pRobot->update();
+			m_pRobot->update(timeChange.value);
 	  CollideData cd(m_pWorld,m_pContactGroup);
 		m_pSpace->collide(&cd,&nearCallback);
 		m_pWorld->step(timeChange.value.ms()/1000.0);

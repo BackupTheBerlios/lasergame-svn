@@ -11,6 +11,7 @@
 
 #include "util/msg.h"
 #include "number/pose.h"
+#include "number/time.h"
 
 class dWorld;
 class dSpace;
@@ -21,7 +22,7 @@ class OdeRobot
 	  msg::Channel* m_pChannel;
 	public:
 	  OdeRobot(msg::Channel* in_pChannel) : m_pChannel(in_pChannel) {}
-	  virtual void update() = 0;
+	  virtual void update(const num::Time& in_timeChange) = 0;
 		virtual void create(dWorld* in_world, dSpace* in_space, num::Pose in_pose) = 0;
 		virtual void destroy() = 0;
 		virtual ~OdeRobot() {}
