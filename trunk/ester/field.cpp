@@ -215,5 +215,36 @@ int Field::tryEatBall(const Pose & in_pose, const Dist & BALL_EAT_DIST) //{{{1
 	}
 	return 0;
 }
+
+void Field::shootBall(const Pose & in_pose) //{{{1
+{
+	if (m_verbose)
+		cout << "*** Shooting ball from " << "[" << in_pose << "]" << endl;
+
+	if ((in_pose.heading() <= Deg(-90)) || (in_pose.heading() >= Deg(90)))
+	{
+	  if (m_verbose) cout << "*** MISSED: Shooting to the other side" << endl;
+	}
+	else
+	{
+		Angle ang = in_pose.heading();
+		Dist dy = (measures::SIZE_X() - in_pose.x()) * (ang.sin()/ang.cos());
+		Dist distFromCenter = in_pose.y() + dy - measures::SIZE_Y()/2;
+		//Dist absDistFromCenter = (distFromCenter > 0 ? distFromCenter : -distFromCenter);
+		//if (absDistFromCenter < Milim(300) )
+		if (distFromCenter.eq(Dist(), Milim(300)))
+		{
+			if (m_verbose)
+				cout << "*** SCORED HIT!!! at " << distFromCenter.mm() << " mm from center" << endl;
+			m_score++;
+			//m_lastHitTime = m_timeChange.m_time;
+		}
+		else if (m_verbose)
+			cout << "*** MISSED: at "<< distFromCenter.mm() << " mm from center" << endl;
+	}
+	if (m_verbose)
+		cout << "*** Current score is " << m_score << endl; 
+		//", current time is " << m_timeChange.m_time.ms() / 1000.0 << " s" << endl;
+}
 //}}}1
 

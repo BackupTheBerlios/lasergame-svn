@@ -50,6 +50,7 @@ class Field
 		num::Dist palm2Dist(const num::Point & in_p) const { return m_palm2.distanceTo(in_p); }
 
 		int tryEatBall(const num::Pose & in_pose, const num::Dist & BALL_EAT_DIST);
+		void shootBall(const num::Pose & in_pose);
 		
 		const num::Point & enemy() { return m_enemy; }
 

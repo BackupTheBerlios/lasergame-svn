@@ -240,8 +240,12 @@ void Simul::reqSpeed() //{{{1
 
 void Simul::reqShoot() //{{{1
 {
-}//}}}1
-
+	ASSERT( m_numBallsIn.value > 0 );
+	ASSERT( m_reqShoot.value.gt() );
+	while (m_numBallsIn.value-- > 0)
+		m_field.shootBall(m_pose.value);
+}
+//}}}1
 #if 0
 void Simul::setError(const Angle::type& in_ae, const Dist::type& in_fe, const Angle::type& in_de)//{{{1
 {
@@ -249,48 +253,6 @@ void Simul::setError(const Angle::type& in_ae, const Dist::type& in_fe, const An
 	FERR = in_fe;
 	DERR = in_de;
 }
+//}}}1
 #endif
-
-
-#if 0
-void EsterSimul::upBalls() //{{{1
-{
-	if (!m_ballIn)
-		m_reqShoot.m_dist = Dist();
-	else
-	{
-		if (m_reqShoot.m_dist.gt())
-		{
-			cout << "*** Shooting ball from " << "[" << m_pose.m_pose.n() << "]" << endl;
-
-			if ((m_pose.m_pose.heading() <= Deg(-90)) || (m_pose.m_pose.heading() >= Deg(90)))
-			{
-			  cout << "*** MISSED: Shooting to the other side" << endl;
-			}
-			else
-			{
-				Angle ang = m_pose.m_pose.heading();
-				Dist dy = (measures::SIZE_X() - m_pose.m_pose.x()) * (ang.sin()/ang.cos());
-				Dist distFromCenter = m_pose.m_pose.y() + dy - measures::SIZE_Y()/2;
-				Dist absDistFromCenter = (distFromCenter > 0 ? distFromCenter : -distFromCenter);
-				if (absDistFromCenter < Milim(300) )
-				{
-			    cout << "*** SCORED HIT!!! at " << distFromCenter.mm() << " mm from center" << endl;
-					m_score++;
-					m_lastHitTime = m_timeChange.m_time;
-				}
-				else
-					cout << "*** MISSED: at "<< distFromCenter.mm() << " mm from center" << endl;
-			}
-			cout << "*** Current score is " << m_score << ", current time is " << 
-				m_timeChange.m_time.ms() / 1000.0 << " s" << endl;
-			
-			m_numBallsIn--;
-		}
-	}
-}
-//}}}
-
-#endif
-
 
