@@ -23,28 +23,28 @@ public:
 	/// Creates speed representing Dist/sec
 	explicit LinearSpeed(const Dist& a_dist) : m_dist(a_dist) {}
 	explicit LinearSpeed() {}
-	Dist operator * (const Time& a_time) { return m_dist * (a_time/MSec(1000)); }
-	LinearSpeed operator * (const int n) { return LinearSpeed(m_dist*n); }
+	Dist operator * (const Time& a_time) const { return m_dist * (a_time/MSec(1000)); }
+	LinearSpeed operator * (const int n) const { return LinearSpeed(m_dist*n); }
 	friend bool operator > (const LinearSpeed& a, const LinearSpeed& b) { return a.m_dist > b.m_dist; }
-	bool gt(const LinearSpeed& b=LinearSpeed()) { return m_dist.gt(b.m_dist); }
+	bool gt(const LinearSpeed& b=LinearSpeed()) const { return m_dist.gt(b.m_dist); }
 	friend bool operator < (const LinearSpeed& a, const LinearSpeed& b) { return a.m_dist < b.m_dist; }
-	bool lt(const LinearSpeed& b=LinearSpeed()) { return m_dist.lt(b.m_dist); }
+	bool lt(const LinearSpeed& b=LinearSpeed()) const { return m_dist.lt(b.m_dist); }
 	friend bool operator >= (const LinearSpeed& a, const LinearSpeed& b) { return a.m_dist >= b.m_dist; }
 	friend bool operator <= (const LinearSpeed& a, const LinearSpeed& b) { return a.m_dist <= b.m_dist; }
 	friend bool operator == (const LinearSpeed& a, const LinearSpeed& b) { return a.m_dist == b.m_dist; }
-	bool eq(const LinearSpeed& b=LinearSpeed()) { return m_dist.eq(b.m_dist); }
+	bool eq(const LinearSpeed& b=LinearSpeed()) const { return m_dist.eq(b.m_dist); }
 	LinearSpeed operator - () const { return LinearSpeed(Dist() - m_dist); }
 	void operator = (const Dist& d) { m_dist = d; }
 	LinearSpeed& operator += (const LinearSpeed& f) { m_dist += f.m_dist; return *this; }
 	LinearSpeed& operator -= (const LinearSpeed& f) { m_dist -= f.m_dist; return *this; }
-	LinearSpeed& operator /= (const Number& n) { m_dist /= n; return *this; }
+	LinearSpeed& operator /= (const Dist::type& n) { m_dist /= n; return *this; }
 	friend Time operator / (const Dist& d, const LinearSpeed& f);
 	int mm() const { return m_dist.mm(); }
 };
 
 inline Time operator / (const Dist& d, const LinearSpeed& f) //{{{2
 {
-	return MSec(toInt(d / f.m_dist, 1000));
+	return Sec(d / f.m_dist); //MSec(toInt(d / f.m_dist, 1000));
 }
 
 /// Linear acceleration
@@ -53,7 +53,7 @@ class LinearAcc //{{{1
 	Dist m_dist;
 public:
 	explicit LinearAcc(const Dist& d) : m_dist(d) {}
-	LinearSpeed operator * (const Time& t) { return LinearSpeed(m_dist * (t/Sec(1))); }
+	LinearSpeed operator * (const Time& t) const { return LinearSpeed(m_dist * (t/Sec(1))); }
 };
 
 class AngularSpeed //{{{1
@@ -79,7 +79,7 @@ public:
 	AngularSpeed operator * (const int n) const { return AngularSpeed(m_angle*n); }
 	friend Time operator / (const Angle& a, const AngularSpeed& omega) 
 	{
-		return MSec(toInt(a / omega.m_angle, 1000));
+		return Sec(a / omega.m_angle); //MSec(toInt(a / omega.m_angle, 1000));
 	}
 	int deg() const
 	{
