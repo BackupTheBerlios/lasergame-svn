@@ -9,6 +9,7 @@ namespace
 	{
 		int m_int;
 		public:
+		Int(const Int& in_int) { m_int = in_int.m_int; }
 			Int() : m_int(0) {}
 			bool operator == (const int & in_int) { return m_int == in_int; }
 			void set(const int & in_int) { m_int = in_int; }
@@ -20,11 +21,11 @@ namespace
 		msg::Subs<Int> receiver("number");
 		msg::Subs<Int> nonReceiver("aaa");
 
-		REQUIRE( Int(receiver) == 0 );
-		Int(sender).set(5);
+		REQUIRE( receiver == 0 );
+		sender.set(5);
 		sender.publish();
 		msg::wait();
-		REQUIRE( Int(receiver) == 5 );
+		REQUIRE( receiver == 5 );
 	}
 }
 

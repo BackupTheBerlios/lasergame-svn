@@ -12,6 +12,23 @@
 
 namespace msg
 {
+	class TaskBase
+	{
+		public:  class Impl;
+		protected: Impl* m_pimpl;
+
+		public:
+			// Creates Impl (thread-specific things = lock, item queue)
+			TaskBase();
+			// Destroys Impl
+			virtual ~TaskBase();
+	};
+	
+	class Task : public TaskBase
+	{
+		
+	};
+
 	class SubsBase;
 
 	class TaskItemBase
@@ -43,6 +60,7 @@ namespace msg
 	class SubsBase
 	{
 		SubsList& m_subList;
+		TaskBase::Impl& m_taskImpl;
 		public:
 			SubsBase(const char* in_name);
 			virtual ~SubsBase();
@@ -50,23 +68,19 @@ namespace msg
 			void publish() const;
 	};
 
-	template <class T> class Subs : public SubsBase
+	template <class T> class Subs : public SubsBase, public T
 	{
-		public: // because of a bug in msvc-7.1
-			T m_data;
-
 		public:
 			Subs(const char* in_name) : SubsBase(in_name) {}
-			operator T& () { return m_data; }
 			virtual TaskItemBase* createTaskItem(SubsBase* in_targetSubs) const
 			{
-				return new TaskItem<T>(in_targetSubs, m_data);
+				return new TaskItem<T>(in_targetSubs, *this);
 			}
 	};
 	
 	template <class T> void TaskItem<T>::assign()
 	{
-		dynamic_cast<Subs<T>*>(m_subs)->m_data = m_data;
+		*dynamic_cast<T*>(m_subs) = m_data;
 	}
 
 	void wait();
