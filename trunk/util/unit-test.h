@@ -7,7 +7,7 @@
  *          
  * @author Zbynek Winkler (c) 2004
  * 
- * $Id: $
+ * $Id$
  */
 
 #include <cstdlib>
@@ -31,6 +31,7 @@
 
 #define CPPUNIT_ASSERT(pred) REQUIRE(pred)
 #define CPPUNIT_ASSERT_EQUAL(a,b) REQUIRE((a) == (b))
+#define CPPUNIT_ASSERT_DOUBLES_EQUAL(a,b,c) REQUIRE((((a)-(b)) < (c)) && (((a)-(b)) > (-c)))
 
 namespace 
 {
