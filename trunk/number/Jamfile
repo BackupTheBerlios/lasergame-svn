@@ -14,7 +14,7 @@ unit-test angle-test : angle-test.cpp ;
 #unit-test test : test.cpp ;
 my-test pose-test : pose-test.cpp ;
 my-test time-test : time-test.cpp ;
-#my-test speed-test : SpeedTest.cpp ;
+my-test speed-test : speed-test.cpp ;
 #
 #obj number : Number.cpp : <arit>double ;
 #obj number : Number.cpp : <arit>float ;
