@@ -30,29 +30,9 @@ namespace msg
 	};
 
 	class SubsBase;
-
-	class TaskItemBase
+	class WrappedBase
 	{
-		protected:
-			SubsBase* m_subs;
-		
-		public:
-			TaskItemBase(SubsBase* in_targetSubs) : m_subs(in_targetSubs) {}
-			virtual void assign() = 0;
-			virtual ~TaskItemBase() {}
-			bool isFor(SubsBase* in_subs) { return m_subs == in_subs; }
-	};
-
-	template <class T> class TaskItem : public TaskItemBase
-	{
-		T m_data;
-		
-		public:
-			TaskItem(SubsBase* in_targetSubs, const T & in_data) 
-				: TaskItemBase(in_targetSubs), m_data(in_data)
-			{
-			}
-			virtual void assign(); // defined later in this file
+		public: virtual void assignTo(SubsBase* in_subs) const = 0;
 	};
 
 	class SubsList;
@@ -64,25 +44,31 @@ namespace msg
 		public:
 			SubsBase(const char* in_name);
 			virtual ~SubsBase();
-			virtual TaskItemBase* createTaskItem(SubsBase* in_targetSubs) const = 0;
+			virtual WrappedBase* createWrapped() const = 0;
 			void publish() const;
+	};
+
+	template <class T> class Wrapped : public WrappedBase
+	{
+		T m_data;
+		public:
+			Wrapped(const T& in_data) : m_data(in_data) {}
+			void assignTo(SubsBase* in_subs) const
+			{
+				*dynamic_cast<T*>(in_subs) = m_data;
+			}
 	};
 
 	template <class T> class Subs : public SubsBase, public T
 	{
 		public:
 			Subs(const char* in_name) : SubsBase(in_name) {}
-			virtual TaskItemBase* createTaskItem(SubsBase* in_targetSubs) const
+			virtual WrappedBase* createWrapped() const
 			{
-				return new TaskItem<T>(in_targetSubs, *this);
+				return new Wrapped<T>(*this);
 			}
 	};
 	
-	template <class T> void TaskItem<T>::assign()
-	{
-		*dynamic_cast<T*>(m_subs) = m_data;
-	}
-
 	void wait();
 }
 

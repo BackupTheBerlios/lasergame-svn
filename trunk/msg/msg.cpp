@@ -30,14 +30,27 @@
 namespace msg 
 { 
 	class SubsList : public std::list<SubsBase*> { }; 
+	class TaskItem //{{{1
+	{
+		protected:
+			SubsBase* m_subs;
+			WrappedBase* m_user;
+		
+		public:
+			TaskItem(SubsBase* in_targetSubs, WrappedBase* in_user) 
+				: m_subs(in_targetSubs), m_user(in_user) {}
+			bool isFor(SubsBase* in_subs) { return m_subs == in_subs; }
+			void destroy() { delete m_user; m_user = 0; }
+			void assign() { m_user->assignTo(m_subs); destroy(); }
+	};
 
-	class TaskBase::Impl : public std::list<TaskItemBase*>, public thread::Lock, public thread::CondVar
+	class TaskBase::Impl : public std::list<TaskItem>, public thread::Lock, public thread::CondVar
 	{
 		public:
 			void wait() { thread::CondVar::wait(*this); }	
-			void push_back_locked(TaskItemBase* in_item)
+			void push_back_locked(SubsBase* in_subs, WrappedBase* in_item)
 			{
-				lock(); push_back(in_item); broadcast(); unlock();
+				lock(); push_back(TaskItem(in_subs, in_item)); broadcast(); unlock();
 			}
 	};
 
@@ -78,7 +91,7 @@ namespace
 			Locker() : thread::Locker(s_allSubs) {}
 	};
 
-	TaskItemBase* getItem() //{{{1
+	TaskItem getItem() //{{{1
 	{
 		// 1. find current thread and associated queue
 		TaskBase::Impl* t = s_impl();
@@ -87,7 +100,7 @@ namespace
 		// 3. pop and return the item
 		while (t->empty())
 			t->wait();
-		TaskItemBase* i = t->front();
+		TaskItem i(t->front());
 		t->pop_front();
 		return i;
 		// [4. auto-unlock]
@@ -102,14 +115,15 @@ namespace
 		// 3. loop through all and erase & delete items for in_subs (use TaskItemBase::isFor(SubsBase))
 		for (TaskBase::Impl::iterator i = t->begin(); i != t->end(); ++i)
 		{
-			if ((*i)->isFor(in_subs))
+			if (i->isFor(in_subs))
 			{
-				delete *i;
+				i->destroy();
 				t->erase(i);
 			}
 		}
 		// [4. auto-unlock]
-	}//}}}
+	}
+	//}}}
 }
 
 namespace msg {
@@ -120,7 +134,7 @@ void SubsBase::publish() const //{{{1
 	for (std::list<msg::SubsBase*>::iterator i = m_subList.begin(); i != m_subList.end(); i++)
 	{
 		if (*i != this)
-			(*i)->m_taskImpl.push_back_locked(createTaskItem(*i)); // thread safe
+			(*i)->m_taskImpl.push_back_locked(*i, createWrapped()); // thread safe
 	}
 }
 
@@ -145,15 +159,11 @@ SubsBase::~SubsBase() //{{{1
 void wait() //{{{1
 {
 	// remove the item from the top of the current task queue, thread safe, blocking
-	TaskItemBase* item = getItem();
+	TaskItem item = getItem();
 	// assign the data according to the subscription
-	item->assign();   
-	delete item;
+	item.assign();   
 }
+//}}}
 
 } // namespace msg
 
-namespace
-{
-
-} // anonymous namespace
