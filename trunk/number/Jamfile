@@ -11,10 +11,11 @@
 unit-test rnd-test : rnd-test.cpp ;
 unit-test dist-test : dist-test.cpp ;
 unit-test angle-test : angle-test.cpp ;
-#unit-test test : test.cpp ;
-my-test pose-test : pose-test.cpp ;
-my-test time-test : time-test.cpp ;
-my-test speed-test : speed-test.cpp ;
+unit-test pose-test : pose-test.cpp : <dependency>angle-test <dependency>dist-test ;
+unit-test time-test : time-test.cpp ;
+unit-test speed-test : speed-test.cpp 
+	: <dependency>angle-test <dependency>dist-test <dependency>time-test ;
+
 #
 #obj number : Number.cpp : <arit>double ;
 #obj number : Number.cpp : <arit>float ;
