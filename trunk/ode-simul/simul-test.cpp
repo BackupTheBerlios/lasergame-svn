@@ -1,4 +1,4 @@
-// $Id: simul-test.cpp 109 2004-09-18 21:31:11Z zwin $
+// $Id$
 // Copyright (C) 2004, Zbynek Winkler
 
 #include <iostream>

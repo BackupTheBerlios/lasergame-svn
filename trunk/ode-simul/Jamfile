@@ -1,4 +1,4 @@
-# $Id: Jamfile 109 2004-09-18 21:31:11Z zwin $
+# $Id$
 
 libs = /util//thread /util//msg /util//conf ;
 

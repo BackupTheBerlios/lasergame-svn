@@ -5,7 +5,7 @@
 *         
 * @author Jaroslav Sladek
 *
-* $Id: angle.h 77 2004-09-08 20:47:04Z zwin $
+* $Id$
 */
 
 
