@@ -8,13 +8,10 @@
 namespace drivers {
 	namespace ester {
 
-	class Speed : public drivers::SpeedBase
+	class Speed : public SpeedBase
 	{
 		public:
-			Speed(msg::Channel* in_p, int in_id, msg::Channel* in_done) : SpeedBase(in_p, in_id, in_done) 
-			{
-				//ASSERT( false );
-			}
+			Speed(Params& in_params) : SpeedBase(in_params) {}
 			
 			static inline const num::LinearAcc ACCEL() 
 			{ 

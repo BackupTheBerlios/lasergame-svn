@@ -1,23 +1,29 @@
+// $Id$
+// Copyright (C) 2004, Zbynek Winkler
+
+///@file
 #ifndef DRIVERS_POSE_H_INCLUDED
 #define DRIVERS_POSE_H_INCLUDED 1
 
 #include "drivers.h"
 #include "number/pose.h"
+#include "../measures.h"
 
 namespace drivers {
 
 class Pose : public Driver
 {
 	public:
-		Pose(msg::Channel* in_p, int in_id, msg::Channel* in_done) : Driver(in_p, in_id, in_done) {}
+		Pose(Params& in_params) : Driver(in_params) {}
 		virtual void main()
 		{
 			using namespace msg;
-			Subs<num::Pose> dp  (m_p, "pose-change"); // subscribe to local to get 'true' value
-			Subs<num::Pose> pose(m_p, "pose");        // subscribe to local to get 'true' value
-			Subs<int>    done(m_done);
+			Subs<num::Pose> dp  (m.p, "pose-change"); // subscribe to local to get 'true' value
+			Subs<num::Pose> pose(m.p, "pose");        // subscribe to local to get 'true' value
+			pose.value = measures::INITIAL();
+			Subs<int>    done(m.done);
 
-			done.value = m_myID;
+			done.value = m.myID;
 			done.publish();
 			
 			while (true)
@@ -26,7 +32,7 @@ class Pose : public Driver
 				updatePose(pose.value, dp.value); // update pose
 				pose.publish();               // let the others know
 	
-				done.value = m_myID;
+				done.value = m.myID;
 				done.publish();
 			}
 		}

@@ -30,10 +30,18 @@ void Manager::main() //{{{1
 	
 	int i = 0;
 	for (conf::Robot::const_iterator iter = m_a.begin() ; iter != m_a.end(); i++,iter++)
-		m_drivers.push_back(new Task(drivers::getFactory(iter->c_str())(m_pa, i, driverDone)));
+	{
+		drivers::pFac fac = drivers::getFactory(iter->c_str());
+		drivers::Driver::Params p(m_pa, i, driverDone, m_field);
+		m_drivers.push_back(new Task(fac(p)));
+	}
 
 	for (conf::Robot::const_iterator iter = m_b.begin() ; iter != m_b.end(); i++,iter++)
-		m_drivers.push_back(new Task(drivers::getFactory(iter->c_str())(m_pb, i, driverDone)));
+	{
+		drivers::pFac fac = drivers::getFactory(iter->c_str());
+		drivers::Driver::Params p(m_pb, i, driverDone, m_field);
+		m_drivers.push_back(new Task(fac(p)));
+	}
 
 	//cout << "Waiting for drivers to finish initialization..." << endl;
 	waitForDrivers(driverDone);

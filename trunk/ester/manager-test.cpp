@@ -196,7 +196,6 @@ AUTOTEST(testFloorColor) //{{{1
 }
 //}}}
 
-#if 0
 AUTOTEST(testGP2) //{{{1
 {
 	Dir dirA;
@@ -237,6 +236,7 @@ AUTOTEST(testGP2) //{{{1
 	REQUIRE( x < Milim(910) && x > Milim(890)  );
 }
 
+#if 0
 AUTOTEST(testBallEating) //{{{1
 {
 	Subs<int> dir(0);

@@ -18,9 +18,9 @@ namespace drivers {
 	typedef std::map< std::string, pFac > DriverTable;
 	DriverTable s_driverTable;
 	
-	template <typename T> msg::Runnable* create(msg::Channel* in_p, int in_id, msg::Channel* in_done)
+	template <typename T> msg::Runnable* create(Driver::Params& in_params)
 	{
-		return new T(in_p, in_id, in_done);
+		return new T(in_params);
 	}
 	
 	template <typename T> void r(const char* in_name)

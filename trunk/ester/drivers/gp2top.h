@@ -13,31 +13,39 @@ namespace drivers {
 class GP2Top : public Driver
 {
 	public:
-		GP2Top(msg::Channel* in_p, int in_id, msg::Channel* in_done) : Driver(in_p, in_id, in_done) {}
+		GP2Top(const Params& in_params) : Driver(in_params) {}
+		
+		//! Maximum distance where GP still picks up palm
+		inline const num::Dist MAX_GP_DISTANCE() { return num::Milim(900); }
+		
+		//! Distance that makes one unit difference on output from GP
+		inline const num::Dist GP_UNIT_DIST() { return num::Milim(5); }
+		
 		virtual void main()
 		{
 			using namespace msg;
-			Subs<num::Pose> pose(m_p, "pose");
-			Subs<double>  gp2top(m_p, "gp2top");
-			Subs<int>       done(m_done);
+			Subs<num::Pose> pose(m.p, "pose");
+			Subs<double>  gp2top(m.p, "gp2top");
+			Subs<int>       done(m.done);
 
-			done.value = m_myID;
+			done.value = m.myID;
 			done.publish();
 
 			while (true)
 			{
 				waitFor(pose);
 
-				gp2top.value = 0;
+				gp2top.value = calc(m.field, pose.value);
 				gp2top.publish();
 				
-				done.value = m_myID;
+				done.value = m.myID;
 				done.publish();
 			}
 		}
-#if 0
-		double calcGP2top(const Field& in_field, const Pose & in_pose)
+		
+		double calc(const Field& in_field, const num::Pose & in_pose)
 		{
+			using namespace num;
 			Dist p1 = in_field.palm1Dist(in_pose.point());
 			Dist p2 = in_field.palm2Dist(in_pose.point());
 			Dist closer = min(p1, p2);
@@ -47,7 +55,6 @@ class GP2Top : public Driver
 			else
 				return 0;
 		}
-#endif
 };
 
 }

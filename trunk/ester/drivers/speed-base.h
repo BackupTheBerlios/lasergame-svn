@@ -10,17 +10,17 @@ namespace drivers {
 	class SpeedBase : public Driver
 	{
 		public:
-			SpeedBase(msg::Channel* in_p, int in_id, msg::Channel* in_done) : Driver(in_p, in_id, in_done) {}
+			SpeedBase(const Params& in_params) : Driver(in_params) {}
 			virtual void main()
 			{
 				using namespace msg;
 				using namespace std;
-				Subs<num::Time>  dt       (m_p, "time-change");
-				Subs<num::Speed> speedReq (m_p, "speed-requested");
-				Subs< std::pair<num::Time, num::Speed> > out (m_p, "time-change+speed-current");
-				Subs<int> done(m_done);
+				Subs<num::Time>  dt       (m.p, "time-change");
+				Subs<num::Speed> speedReq (m.p, "speed-requested");
+				Subs< std::pair<num::Time, num::Speed> > out (m.p, "time-change+speed-current");
+				Subs<int> done(m.done);
 				num::Speed speedCur;
-				done.value = m_myID;
+				done.value = m.myID;
 				done.publish();
 				while (true)
 				{
@@ -28,7 +28,7 @@ namespace drivers {
 					update(speedCur, speedReq.value, dt.value);
 					out.value = make_pair(dt.value, speedCur);
 					out.publish();
-					done.value = m_myID;
+					done.value = m.myID;
 					done.publish();
 				}
 			}

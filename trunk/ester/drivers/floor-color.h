@@ -11,16 +11,16 @@ namespace drivers {
 class FloorColor : public Driver
 {
 	public:
-		FloorColor(msg::Channel* in_p, int in_id, msg::Channel* in_done) : Driver(in_p, in_id, in_done) {}
+		FloorColor(const Params& in_params) : Driver(in_params) {}
 		virtual void main()
 		{
 			using namespace msg;
 			using namespace std;
-			Subs<num::Pose> pose(m_p, "pose");
-			Subs<num::FloorColor> floorColor(m_p, "floor-color");
-			Subs<int> done(m_done);
+			Subs<num::Pose> pose(m.p, "pose");
+			Subs<num::FloorColor> floorColor(m.p, "floor-color");
+			Subs<int> done(m.done);
 			
-			done.value = m_myID;
+			done.value = m.myID;
 			done.publish();
 			
 			while (true)
@@ -29,7 +29,7 @@ class FloorColor : public Driver
 				waitFor(pose);
 				floorColor.publish();
 				
-				done.value = m_myID;
+				done.value = m.myID;
 				done.publish();
 			}
 		}
