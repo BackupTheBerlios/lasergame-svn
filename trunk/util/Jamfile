@@ -14,7 +14,9 @@ else
 
 #echo [ os.name ] [ os.platform ] [ os.version ] ;
 obj msg : msg.cpp ;
+obj conf : conf.cpp ;
 
 unit-test thread-test : thread thread-test.cpp ;
 unit-test msg-test : msg thread msg-test.cpp ;
+unit-test conf-test : conf conf-test.cpp ;
 
