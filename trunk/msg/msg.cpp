@@ -16,7 +16,6 @@
  *
  * All manipulation with channels and subscriptions is guarded by a single
  * lock s_allSubs. Task queues have their own locks.
- * 
  */
 
 #include <map>
@@ -24,6 +23,7 @@
 #include <string>
 #include <algorithm>
 #include "util/thread.h"
+#include "util/assert.h"
 #include "msg/msg.h"
 
 namespace msg 
@@ -50,15 +50,24 @@ namespace msg
 
 	class TaskImpl : public std::list<TaskItem>, public thread::Lock, public thread::CondVar //{{{1
 	{
+		bool m_running;
 		public:
-			thread::id_t m_id;
-			TaskImpl() { s_impl = this; }
+			TaskImpl() : m_running(true) { }
+			~TaskImpl() { ASSERT( empty() ); }
 			void wait() { thread::CondVar::wait(*this); }	
+			bool running() { return m_running; }
 			void push_back_locked(SubsBase* in_subs, WrappedBase* in_item)
 			{
 				lock(); 
 				push_back(TaskItem(in_subs, in_item)); 
 				broadcast(); 
+				unlock();
+			}
+			void stop()
+			{
+				lock();
+				m_running = false;
+				broadcast();
 				unlock();
 			}
 	};
@@ -70,7 +79,12 @@ namespace
 	using namespace msg;
 	using namespace thread;
 
-	TaskImpl s_main;
+	class Main : public TaskImpl //{{{1
+	{
+		public: Main() { s_impl = this; }
+	} s_main;
+
+	class stop {};	//{{{1
 	
 	class AllSubs : public thread::Lock, public std::map< std::string, Channel* > //{{{1
 	{
@@ -85,8 +99,10 @@ namespace
 		// 2. lock it
 		Locker lock(*t);
 		// 3. pop and return the item
-		while (t->empty())
+		while (t->empty() && t->running())
 			t->wait();
+		if (!t->running())
+			throw stop();
 		TaskItem i(t->front());
 		t->pop_front();
 		return i;
@@ -113,14 +129,14 @@ namespace
 		}
 		// [4. auto-unlock]
 	}
-	ulong threadFn(void* in_helper) //{{{1
+	ulong threadFn(void* in_void) //{{{1
 	{
-		// create support structures for messages
-		TaskImpl m;
+		HelperBase* in_helper = (HelperBase*)(in_void);
+		s_impl = in_helper->m_taskImpl;
 		// create the user object
-		Runnable* dummy = ((HelperBase*)(in_helper))->create();
+		Runnable* dummy = in_helper->create();
 		// delete in_helper since it is no longer needed
-		delete ((HelperBase*)(in_helper));
+		delete in_helper;
 		// call user supplied main
 		try { dummy->main(); } catch(...) {}
 		// delete the user object
@@ -131,7 +147,6 @@ namespace
 }
 
 namespace msg {
-	
 	class Channel : public std::list<SubsBase*> //{{{1
 	{
 		public:
@@ -199,19 +214,21 @@ void wait() //{{{1
 
 Task::Task(HelperBase* in_helper) //{{{1
 {
+	// create support structures for messages
+	m_pimpl = new TaskImpl();
+	in_helper->m_taskImpl = m_pimpl;
 	m_id = thread::create(threadFn, in_helper);
 }
 
 Task::~Task() //{{{1
 {
-	// TODO: tell the thread to stop
+	m_pimpl->stop();
 	thread::join(m_id);
+	delete m_pimpl;
 }
 //}}}
 } // namespace msg
 
-namespace
-{
 	Channel* AllSubs::getChannel(const char* in_name) //{{{1
 	{
 		iterator ret = lower_bound(in_name);
@@ -222,4 +239,3 @@ namespace
 		}
 		return ret->second;
 	}	//}}}
-}

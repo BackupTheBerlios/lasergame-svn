@@ -19,7 +19,7 @@ namespace msg
 	
 	class Runnable { public: virtual void main() = 0; virtual ~Runnable() {} };
 	
-	class HelperBase { public: virtual Runnable* create() = 0; };
+	class HelperBase { public: TaskImpl* m_taskImpl; virtual Runnable* create() = 0; };
 
 	template <class What, class Par1> class Helper : public HelperBase
 	{
@@ -45,6 +45,7 @@ namespace msg
 	class Task
 	{
 		thread::id_t m_id;
+		TaskImpl* m_pimpl;
 		public:
 			/// creates thread
 			Task(HelperBase* in_helper);
