@@ -57,6 +57,8 @@ template <typename T> class Pose3DT
 	public:
 		Pose3DT() {}
 		Pose3DT(const DistT<T> & in_x, const DistT<T> & in_y) : m_point(in_x, in_y) {}
+		Pose3DT(const Point3DT<T> & in_point, const Quaternion & in_quaternion) :
+			m_point(in_point), m_quaternion(in_quaternion) {}
 		Point3DT<T> & point() { return m_point; }
 		Quaternion & quaternion() { return m_quaternion; }
 		const Point3DT<T> & point() const  { return m_point; }
