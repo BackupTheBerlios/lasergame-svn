@@ -1,0 +1,17 @@
+# $Id$
+project util ;
+import os ;
+
+if [ os.on-windows ] 
+{
+	obj thread : thread-win32.cpp ;
+}
+else
+{
+	obj thread : thread-pthread.cpp ;
+}
+
+#echo [ os.name ] [ os.platform ] [ os.version ] ;
+
+unit-test thread-test : thread thread-test.cpp ;
+
