@@ -8,6 +8,8 @@ unit-test simul-test : simul.cpp simul-test.cpp $(libs) components//components ;
 
 unit-test four-wheeler-test : robots/four-wheeler-test.cpp simul.cpp robots/four-wheeler.cpp $(libs) components//components ;
 
+build-project objects ;
+
 #my-test move-test : MoveTest.cpp Move EsterSimul $(libs) ;
 #my-test ball-scan-test : BallScanTest.cpp EsterSimul Move $(libs) ;
 #my-test mcl-test : MCLTest.cpp /mcl//mcl MCL Move EsterSimul $(libs) ;

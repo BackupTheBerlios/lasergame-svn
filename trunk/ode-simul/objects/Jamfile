@@ -1,0 +1,6 @@
+libs = /util//thread /util//msg /util//conf ../components//components ;
+lib odelib : : <name>ode ;
+
+unit-test ball-test : ball.cpp ball-test.cpp ../simul.cpp odelib	$(libs) : <link>static ;
+
+
