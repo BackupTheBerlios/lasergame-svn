@@ -1,5 +1,5 @@
-#ifndef DRIVERS_FLOOR_COLOR_H_INCLUDED
-#define DRIVERS_FLOOR_COLOR_H_INCLUDED 1
+#ifndef DRIVERS_FLOOR_COLOR_BASE_H_INCLUDED
+#define DRIVERS_FLOOR_COLOR_BASE_H_INCLUDED 1
 
 #include "drivers.h"
 #include "../floor-color.h"
@@ -8,10 +8,10 @@
 
 namespace drivers {
 
-class FloorColor : public Driver
+class FloorColorBase : public Driver
 {
 	public:
-		FloorColor(const Params& in_params) : Driver(in_params) {}
+		FloorColorBase(const Params& in_params) : Driver(in_params) {}
 		virtual void main()
 		{
 			using namespace msg;
@@ -20,6 +20,7 @@ class FloorColor : public Driver
 			Subs<num::FloorColor> floorColor(m.p, "floor-color");
 			Subs<int> done(m.done);
 			
+			init(floorColor.value);
 			done.value = m.myID;
 			done.publish();
 			
@@ -27,15 +28,19 @@ class FloorColor : public Driver
 			{
 				//cout << "Waiting for pose..." << endl;
 				waitFor(pose);
+				update(floorColor.value, pose.value);
 				floorColor.publish();
 				
 				done.value = m.myID;
 				done.publish();
 			}
 		}
+	protected:
+		virtual void init(num::FloorColor& io_floor) const = 0;
+		virtual void update(num::FloorColor& io_floor, const num::Pose& in_pose) const = 0;
 };
 
 }
 
-#endif // DRIVERS_SPEED_H_INCLUDED
+#endif // DRIVERS_FLOOR_COLOR_BASE_H_INCLUDED
 

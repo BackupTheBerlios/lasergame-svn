@@ -6,7 +6,7 @@
 #include "ester-speed.h"
 #include "pose-change.h"
 #include "pose.h"
-#include "floor-color.h"
+#include "floor-color-ester.h"
 #include "gp2top.h"
 #include "ball-manip.h"
 #include "ball-detect.h"
@@ -42,7 +42,7 @@ namespace drivers {
 				r<PoseChange>("pose-change");
 				r<Pose>("pose");
 				r<GP2Top>("gp2top");
-				r<FloorColor>("floor-color");
+				r<FloorColorEster>("floor-color-ester");
 				r<BallManip>("ball-manip");
 				r<BallDetect>("ball-detect");
 				r<EnemyDetect>("enemy-detect");
