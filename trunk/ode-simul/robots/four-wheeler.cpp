@@ -1,10 +1,22 @@
+/** @file
+*        Simple four wheel robot
+*         
+* @author Jaroslav Sladek
+*
+* $Id$
+*/
 #include <iostream>
 
 #include <ode/ode.h>
-#include <ode/odecpp.h>
 
 #include "four-wheeler.h"
 #include "number/speed.h"
+
+#include "../components/World.h"
+#include "../components/Body.h"
+#include "../components/BoxGeom.h"
+#include "../components/SphereGeom.h"
+#include "../components/Hinge2Joint.h"
 
 using namespace num;
 using namespace std;
@@ -35,7 +47,7 @@ void FourWheeler::reqSpeed(num::Speed& in_speed) //{{{1
 
 
 
-void FourWheeler::create(dWorld* in_world, dSpace* in_space, Pose in_pose)
+void FourWheeler::create(World* in_world, Pose in_pose)
 {
 	msg::Subs<num::Pose> pose(m_pChannel,"true-pose");
 	msg::Subs<num::Speed, FourWheeler> reqSpeed(m_pChannel,"speed-requested", this, &FourWheeler::reqSpeed);
@@ -43,34 +55,22 @@ void FourWheeler::create(dWorld* in_world, dSpace* in_space, Pose in_pose)
 
 	pose.value = in_pose;
 
-  m_pChassis = new dBody(in_world->id());
+  m_pChassis = new Body(in_world);
 	m_pChassis->setPosition(in_pose.x().m(),in_pose.y().m(),STARTZ().m());
-	dMass mass;
-	dMassSetBox(&mass, 1, ROBOT_LENGTH().m(),ROBOT_WIDTH().m(),ROBOT_HEIGHT().m());
-	dMassAdjust(&mass, CHASSIS_MASS());
-	m_pChassis->setMass(&mass);
+	m_pChassisBox = new BoxGeom(m_pChassis, in_world, ROBOT_LENGTH().m(),ROBOT_WIDTH().m(),ROBOT_HEIGHT().m());
+	m_pChassisBox->setMass(CHASSIS_MASS());
 
-	m_pChassisBox = new dBox(in_space->id(), ROBOT_LENGTH().m(),ROBOT_WIDTH().m(),ROBOT_HEIGHT().m());
-	m_pChassisBox->setBody(m_pChassis->id());
-	m_chassisContact.mu = 0.5;
-	m_pChassisBox->setData(&m_chassisContact);
+	m_wheels = new Body[4];
 
-	m_wheels = new dBody[4];
-	m_wheelGeoms = new dSphere[4];
-
-	m_wheelContact.mu = 20;
 	for (int i = 0; i < 4; i++)
 	{
-		m_wheels[i].create(in_world->id());
+		m_wheels[i].create(in_world);
 		dQuaternion q;
 		dQFromAxisAndAngle (q,1,0,0,M_PI*0.5);
 		m_wheels[i].setQuaternion(q);
-		dMassSetSphere (&mass,1,RADIUS().m());
-		dMassAdjust (&mass,WMASS());
-		m_wheels[i].setMass(&mass);
-		m_wheelGeoms[i].create(in_space->id(),RADIUS().m());
-		m_wheelGeoms[i].setBody(m_wheels[i].id());
-		m_wheelGeoms[i].setData(&m_wheelContact);
+		Geom* geom = new SphereGeom(&m_wheels[i], in_world, RADIUS().m());
+		geom->setMass(WMASS());
+		geom->m_contactData.mu = 20;
 	}
 	m_wheels[0].setPosition(in_pose.x().m()+0.4*ROBOT_LENGTH().m()-0.5*RADIUS().m(), 
 	                      in_pose.y().m()+0.5*ROBOT_WIDTH().m(),STARTZ().m()-0.5*ROBOT_HEIGHT().m());
@@ -81,31 +81,30 @@ void FourWheeler::create(dWorld* in_world, dSpace* in_space, Pose in_pose)
 	m_wheels[3].setPosition(in_pose.x().m()-0.4*ROBOT_LENGTH().m()-0.5*RADIUS().m(), 
 	                      in_pose.y().m()-0.5*ROBOT_WIDTH().m(),STARTZ().m()-0.5*ROBOT_HEIGHT().m());
 
-  m_joints = new dHinge2Joint[4];
 	for (int i=0; i<4;i++)
 	{
-		m_joints[i].create(in_world->id());
-		m_joints[i].attach(m_pChassis->id(),m_wheels[i].id());
-		const dReal *a = m_wheels[i].getPosition();
-    m_joints[i].setAnchor (a[0],a[1],a[2]);
-		m_joints[i].setAxis1(0,0,(i<2 ? 1 : -1));
-		m_joints[i].setAxis2(0,1,0);
-		m_joints[i].setParam(dParamSuspensionERP,0.8);
-		m_joints[i].setParam(dParamSuspensionCFM,1e-5);
-		m_joints[i].setParam(dParamVel2,0);
-		m_joints[i].setParam(dParamFMax2,FMAX());
-		m_joints[i].setParam(dParamLoStop,0);
-		m_joints[i].setParam(dParamHiStop,0);
-
+		m_joints[i] = new Hinge2Joint(in_world);
+		m_joints[i]->attach(m_pChassis,&m_wheels[i]);
+		double a[3];
+		m_wheels[i].getPosition(a);
+    m_joints[i]->setAnchor (a[0],a[1],a[2]);
+		m_joints[i]->setAxis1(0,0,(i<2 ? 1 : -1));
+		m_joints[i]->setAxis2(0,1,0);
+		m_joints[i]->setParam(dParamSuspensionERP,0.8);
+		m_joints[i]->setParam(dParamSuspensionCFM,1e-5);
+		m_joints[i]->setParam(dParamVel2,0);
+		m_joints[i]->setParam(dParamFMax2,FMAX());
+		m_joints[i]->setParam(dParamLoStop,0);
+		m_joints[i]->setParam(dParamHiStop,0);
 	}
 		
 }
 
 void FourWheeler::destroy()
 {
-	delete [] m_wheelGeoms;
 	delete [] m_wheels;
-	delete [] m_joints;
+	for (int i =0; i<4; i++)
+	  delete m_joints[i];
 	delete m_pChassisBox;
 	delete m_pChassis;
 }
@@ -118,19 +117,22 @@ Pose calcPoseChange(const Speed & in_speed, const Time & in_dt) //{{{1
 
 void FourWheeler::update(const Time& in_timeChange)
 {
-	const dReal* pos = m_pChassisBox->getPosition();
-	std::cout << "Robot box position: " << pos[0] << "," << pos[1] << "," << pos[2] << std::endl;
+	double pos[3]; 
+	m_pChassis->getPosition(pos);
+	std::cout << "Robot position: " << pos[0] << "," << pos[1] << "," << pos[2] << std::endl;
 
 	dReal speed = m_reqSpeed.value.m_forward.m()/RADIUS().m()*-1;
 	for (int i=0;i<4;i++)
 	{
-		m_joints[i].setParam(dParamVel2,speed);
-		m_joints[i].setParam(dParamFMax2,FMAX());
-		// cout << m_joints[i].getAngle2Rate() << ",";
+		m_joints[i]->setParam(dParamVel2,speed);
+		m_joints[i]->setParam(dParamFMax2,FMAX());
+		 cout << m_joints[i]->getAngle2Rate() << ",";
+#if 0
 		dBodyEnable(m_joints[i].getBody(0));
 		dBodyEnable(m_joints[i].getBody(1));
+#endif
 	}
-	m_currentSpeed.value.m_forward = Meter(m_joints[0].getAngle2Rate()*RADIUS().m() * -1);
+	m_currentSpeed.value.m_forward = Meter(m_joints[0]->getAngle2Rate()*RADIUS().m() * -1);
 	cout << "Current speed is: " << m_currentSpeed.value.m_forward.mm() << endl;
 	m_currentSpeed.publish();
 

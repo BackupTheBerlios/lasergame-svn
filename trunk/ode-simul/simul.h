@@ -17,10 +17,7 @@
 #include "ode-robot.h"
 #include "ContactData.h"
 
-class dWorld;
-class dSpace;
-class dJointGroup;
-class dPlane;
+#include "components/World.h"
 
 class OdeSimul : public msg::Runnable
 {
@@ -33,10 +30,8 @@ class OdeSimul : public msg::Runnable
 
 		virtual void main();
 	private:
-		dWorld* m_pWorld;
-		dSpace* m_pSpace;
-		dJointGroup* m_pContactGroup;
-		dPlane* m_pGround;
+		World* m_pWorld;
+
 		OdeRobot* m_pRobot;
 		ContactData m_groundCD;
 		
