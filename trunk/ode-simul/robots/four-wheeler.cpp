@@ -24,7 +24,7 @@ namespace {
 
 FourWheeler::FourWheeler(msg::Channel* in_pChannel) : OdeRobot(in_pChannel), 
 m_reqSpeed(m_pChannel,"speed-requested", this, &FourWheeler::reqSpeed),
-m_currentSpeed(m_pChannel,"speed-current")
+m_currentSpeed(m_pChannel,"speed-current"), m_poseChange(m_pChannel,"pose-change")
 {
 }
 
@@ -110,7 +110,13 @@ void FourWheeler::destroy()
 	delete m_pChassis;
 }
 
-void FourWheeler::update()
+Pose calcPoseChange(const Speed & in_speed, const Time & in_dt) //{{{1
+{
+	return Pose(in_speed.m_forward * in_dt, Dist(), in_speed.m_angular * in_dt);
+}
+
+
+void FourWheeler::update(const Time& in_timeChange)
 {
 	const dReal* pos = m_pChassisBox->getPosition();
 	std::cout << "Robot box position: " << pos[0] << "," << pos[1] << "," << pos[2] << std::endl;
@@ -127,4 +133,8 @@ void FourWheeler::update()
 	m_currentSpeed.value.m_forward = Meter(m_joints[0].getAngle2Rate()*RADIUS().m() * -1);
 	cout << "Current speed is: " << m_currentSpeed.value.m_forward.mm() << endl;
 	m_currentSpeed.publish();
+
+	m_poseChange.value = calcPoseChange(m_currentSpeed.value,in_timeChange);
+	cout << "Current pose change is: " << m_poseChange.value <<endl;
+	m_poseChange.publish();
 }

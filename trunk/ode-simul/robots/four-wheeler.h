@@ -14,13 +14,14 @@ class FourWheeler : public OdeRobot
 {
   public:
 	  FourWheeler(msg::Channel* in_pChannel);
-	  virtual void update();
+	  virtual void update(const num::Time& in_timeChange);
 		virtual void create(dWorld* in_world, dSpace* in_space, num::Pose in_pose);
 		virtual void destroy();
 	private:
 		void reqSpeed(num::Speed& in_speed);
 		msg::Subs<num::Speed, FourWheeler> m_reqSpeed;
 	  msg::Subs<num::Speed> m_currentSpeed;
+	  msg::Subs<num::Pose> m_poseChange;
 		dBody* m_pChassis;
 		dBox* m_pChassisBox;
 		dHinge2Joint* m_joints;

@@ -60,13 +60,13 @@ AUTOTEST(testLinearSpeed) //{{{1
 	//REQUIRE( i == 132); // 136
 }
 
-#if 0
 
 AUTOTEST(testMove) //{{{1
 {
 	Subs<int> dir(0);
 	Subs<Time> dt(dir, "time-change");
 	Subs<int> watchdog(dir, "watchdog");
+	Subs<Pose> dp(dir, "pose-change");
 	Subs<Speed> req(dir, "speed-requested");
 	
 	OdeSimul* simul = new OdeSimul(dir);
@@ -83,14 +83,17 @@ AUTOTEST(testMove) //{{{1
 	while( t.gt() && d.gt() )
 	{
 		t -= dt.value;
+		d -= dp.value.x();
 		i++;
 		watchdog.publish();
 		waitFor(dt);
 		//cout << t.ms() << ": " << d.mm() << endl;
 	}
-	REQUIRE( i == 241 );
+	REQUIRE( !d.gt() );
+	//REQUIRE( i == 241 );
 }
 
-#endif
+
+
 
 }
