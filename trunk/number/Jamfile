@@ -12,7 +12,7 @@ unit-test rnd-test : rnd-test.cpp ;
 unit-test dist-test : dist-test.cpp ;
 unit-test angle-test : angle-test.cpp ;
 #unit-test test : test.cpp ;
-#my-test pose-test : PositionTest.cpp number ;
+my-test pose-test : pose-test.cpp ;
 #my-test time-test : TimeTest.cpp ;
 #my-test speed-test : SpeedTest.cpp ;
 #
