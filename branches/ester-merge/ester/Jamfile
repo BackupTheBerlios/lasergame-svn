@@ -1,6 +1,5 @@
 # $Id$
 
-obj simul : simul.cpp ;
 #obj Move : Move.cpp : <link>static ;
 #obj EsterUSB : EsterUSB.cpp : <link>static ;
 #obj MCL : MCL.cpp : <link>static ;
@@ -10,8 +9,8 @@ libs = /util//thread /util//msg ;
 #lib controller : EsterSimul Move EsterUSB MCL /cam//cam /mcl//mcl $(libs) : <link>static ;
 
 unit-test measures-test : measures-test.cpp ;
-#unit-test field-test : field-test.cpp field.cpp ;
-unit-test simul-test : simul-test.cpp simul $(libs) ;
+unit-test field-test : field-test.cpp field.cpp ;
+unit-test simul-test : simul-test.cpp simul.cpp field.cpp $(libs) : <dependency>field-test ;
 #my-test move-test : MoveTest.cpp Move EsterSimul $(libs) ;
 #my-test ball-scan-test : BallScanTest.cpp EsterSimul Move $(libs) ;
 #my-test mcl-test : MCLTest.cpp /mcl//mcl MCL Move EsterSimul $(libs) ;

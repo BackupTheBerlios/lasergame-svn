@@ -21,32 +21,60 @@ namespace
 	inline const num::Dist MAX_GP_DISTANCE() { return Milim(900); }
 	//! Distance that makes one unit difference on output from GP
 	inline const num::Dist GP_UNIT_DIST() { return Milim(5); }
-	const int BALL_POSITIONS = 15;
-	const int PALM_POSITIONS = 10;
 	inline const num::Dist BALL_EAT_DIST() { return Milim(60); }
-	class RandGen : public Rnd //{{{1
-	{
-		public:
-			int operator()(int in_max)
-			{
-				return (int) ((uniformD()+1)/2 * in_max);
-      }
-	};
-
-	struct Coords //{{{1
-	{
-		Coords() {}
-		Coords(int in_x, int in_y) : x(in_x), y(in_y) {}
-		int x, y;
-	};
-	struct Subscriptions
-	{
-	};
 	//}}}
+
+static void updateSpeed(num::Speed & in_old, const num::Speed & in_req, const num::Time & in_dt) //{{{1
+{
+	using namespace num;
+	int accel = 0;
+	int brake = 0;
+	
+	if (in_old.m_linear >= LinearSpeed() && in_req.m_linear.gt(in_old.m_linear))
+		accel = 1;
+	else if (in_old.m_linear <= LinearSpeed() && in_req.m_linear.lt(in_old.m_linear))
+		accel = -1;
+
+	if (in_old.m_linear > LinearSpeed() && in_req.m_linear.lt(in_old.m_linear))
+		brake = 1;
+	else if (in_old.m_linear < LinearSpeed() && in_req.m_linear.gt(in_old.m_linear))
+		brake = -1;
+	
+	ASSERT( !(brake != 0 && accel != 0) );
+
+	//cout << accel << "\t" << brake << "\t" << in_req.m_linear.mm() << "\t" 
+	//	<< in_old.m_linear.mm() << endl;;
+
+	if (accel != 0) // speed up (forward or backward)
+		in_old.m_linear += (ACCEL() * in_dt) * accel;
+	else if (brake != 0) // brake
+	{
+		if (in_old.m_linear * brake < LinearSpeed(Milim(60)))
+		{
+			in_old.m_linear -= LinearSpeed(Milim(2)) * brake;
+			if (in_req.m_linear == LinearSpeed() && in_old.m_linear * brake < LinearSpeed(Milim(5)))
+			{
+				//cout << ">>>>>>>>\t" << brake << "\t" << in_old.m_linear.mm() << endl;
+				in_old.m_linear = LinearSpeed();
+			}
+		}
+		else
+		{
+			ASSERT( in_dt == MSec(5) );
+			in_old.m_linear /= 1.0184; // exp(dt*b)==exp(0.005*3.7)==1.018672... 
+		}
+	}
+
+	if (in_old.m_angular.gt(in_req.m_angular))
+		in_old.m_angular -= AngularSpeed(Deg(1000) * (in_dt/Sec(1)));
+	else if (in_old.m_angular.lt(in_req.m_angular))
+		in_old.m_angular += AngularSpeed(Deg(1000) * (in_dt/Sec(1)));
+}
+//}}}
 }
 
-Simul::Simul(msg::Channel* in_p, Field& in_field, ModelBase& in_model, int in_side) //{{{1
-	: m_field(in_field), m_model(in_model),
+Simul::Simul(msg::Channel* in_p, Field& in_field, int in_side) //{{{1
+	: m_field(in_field),
 		m_watchdog    (in_p, "watchdog"),
 		m_seed        (in_p, "seed"),
 		m_timeChange  (in_p, "time-change"),
@@ -81,11 +109,25 @@ void Simul::main() //{{{1
 {
 	while (true)
 	{
+		m_timeChange.publish();
+		//cout << "Waiting for watchdog" << endl;
 		waitFor(m_watchdog);
-		upSpeed();
-		//upPose();
-		//upFloorColor();
-		//upGP2();
+		
+		updateSpeed(m_currentSpeed.value, m_reqSpeed.value, m_timeChange.value);
+		m_currentSpeed.publish();
+		
+		//updatePoseChange(m_poseChange.value, m_currentSpeed.value, m_timeChange.value);
+		//m_poseChange.publish();
+		//
+		//updatePose(m_pose.value, m_poseChange.value);
+		//m_pose.publish();
+		//
+		//updateFloorColor(m_floorColor.value, m_pose.value);
+		//m_floorColor.publish();
+		//
+		//upGP2(m_gp2top.value, m_field, m_pose.value);
+		//m_gp2top.publish();
+		//
 		//upBalls();
 		//upCamera();
 		//upEnemy();
@@ -95,8 +137,7 @@ void Simul::main() //{{{1
 }
 
 #if 0
-void EsterSimul::setError(const num::Angle::type& in_ae, const num::Dist::type& in_fe, 
-		const num::Angle::type& in_de)//{{{1
+void Simul::setError(const Angle::type& in_ae, const Dist::type& in_fe, const Angle::type& in_de)//{{{1
 {
 	AERR = in_ae;
 	FERR = in_fe;
@@ -104,10 +145,6 @@ void EsterSimul::setError(const num::Angle::type& in_ae, const num::Dist::type& 
 }
 #endif
 
-void Simul::upSpeed() //{{{1
-{
-	m_currentSpeed.value = m_model.calcSpeed(m_currentSpeed.value, m_timeChange.value);
-}
 
 void Simul::upPose() //{{{1
 {
@@ -138,6 +175,19 @@ void Simul::reqShoot() //{{{1
 #if 0
 void Simul::upFloorColor() //{{{1
 {
+
+	int n = 0;
+	m_floorColor[n++] = Point(Milim( 14), Milim( 96));
+	m_floorColor[n++] = Point(Milim(113), Milim( 96));
+	m_floorColor[n++] = Point(Milim(-62), Milim( 45));
+	m_floorColor[n++] = Point(Milim( 15), Milim( 35));
+	m_floorColor[n++] = Point(Milim( 15), Milim(-36));
+	m_floorColor[n++] = Point(Milim(-62), Milim(-41));
+	m_floorColor[n++] = Point(Milim(111), Milim(-96));
+	m_floorColor[n++] = Point(Milim( 14), Milim(-96));
+	ASSERT( n == m_floorColor.N_ITEM );
+
+	
 	m_floorColor.m_time = m_timeChange.m_time;
 
 	for (int i = 0; i < m_floorColor.N_ITEM; i++)
@@ -251,7 +301,7 @@ void EsterSimul::upCamera() //{{{1
 	//cout << Angle(m_ballPos.m_off).deg() << endl << endl;
 }
 
-void EsterSimul::upEnemy()
+void EsterSimul::upEnemy() //{{{
 {
   if (!m_checkEnemy)
     return;
@@ -264,4 +314,5 @@ void EsterSimul::upEnemy()
 //}}}
 
 #endif
+
 

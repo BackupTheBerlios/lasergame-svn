@@ -5,17 +5,14 @@
 #include "number/rnd.h"
 #include "number/pose.h"
 #include "number/speed.h"
-//#include "floorcolor.h"
+#include "floor-color.h"
+#include "field.h"
 
-class Field;
-class ModelBase;
-
-/// Simulation of a robot for Eurobot 2004
+/// Simulation of a robot Ester
 class Simul : public msg::Runnable
 {
 	private:
 		Field& m_field;
-		ModelBase& m_model;
 
 		/// @name Common interface
 		/// @{
@@ -34,7 +31,7 @@ class Simul : public msg::Runnable
 		msg::Subs<bool> m_start;
 		msg::Subs<num::Point> m_ballPos; ///< Position of a primary ball in a local frame
 		msg::Subs<num::Point> m_enemy;   ///< Position of enemy in a local frame
-		//Subs<FloorColor> m_floorColor;
+		msg::Subs<FloorColor> m_floorColor;
 		msg::Subs<int> m_numBallsIn;
 		msg::Subs<double> m_gp2top;
 
@@ -51,14 +48,17 @@ class Simul : public msg::Runnable
 		//int m_camTick;
 		
 	public:
-		Simul(msg::Channel* in_pChannel, Field& in_field, ModelBase& in_model, int in_side = 0);
+		Simul(msg::Channel* in_pChannel, Field& in_field, int in_side);
+		static msg::FactoryBase* fac(msg::Channel* in_pChannel, Field& in_field, int in_side = 0)
+		{
+			return msg::factory<Simul>(in_pChannel, in_field, in_side);
+		}
 		~Simul();
 		virtual void main();
 
 	private:
 		void reqSpeed();
 		void reqShoot();
-		void upSpeed();
 		void upPose();
 
 #if 0

@@ -1,3 +1,5 @@
+// $Id$
+
 #include <iostream>
 using namespace std;
 
@@ -14,15 +16,16 @@ AUTOTEST(testTime) //{{{1
 	Subs<int> dir;
 	Subs<Time> dt(dir, "time-change");
 	Subs<int> watchdog(dir, "watchdog");
-	//Simul e(dir, field, model, 0);
+	Field field;
+	Task e(Simul::fac(dir, field, 0));
 	int i = 0;
 	for ( ; i < 10; i++)
 	{
-		watchdog.publish();
 		waitFor(dt);
 		REQUIRE( dt.value == MSec(5) );
+		watchdog.publish();
 	}
-	REQUIRE( i == 9 );
+	REQUIRE( i == 10 );
 }
 //}}}
 
