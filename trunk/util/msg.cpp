@@ -33,16 +33,16 @@ namespace msg
 	{
 		protected:
 			SubsBase* m_subs;
-			WrappedBase* m_user;
+			void* m_user;
 		
 		public:
-			TaskItem(SubsBase* in_targetSubs, WrappedBase* in_user) 
+			TaskItem(SubsBase* in_targetSubs, void* in_user) 
 				: m_subs(in_targetSubs), m_user(in_user) {}
 			/// Intentionaly blank 
 			~TaskItem() {}
 			SubsBase* getSubs() { return m_subs; }
-			void destroy() { delete m_user; m_user = 0; }
-			void assign() { m_user->assignTo(m_subs); destroy(); }
+			void destroy() { m_subs->destroy(m_user); m_user = 0; }
+			void assign() { m_subs->assign(m_user); destroy(); }
 	};
 
 	struct TaskImplKey : public thread::Key //{{{1
@@ -61,7 +61,7 @@ namespace msg
 			~TaskImpl() { ASSERT( empty() ); }
 			void wait() { thread::CondVar::wait(*this); }	
 			bool running() { return m_running; }
-			void push_back_locked(SubsBase* in_subs, WrappedBase* in_item)
+			void push_back_locked(SubsBase* in_subs, void* in_item)
 			{
 				lock(); 
 				push_back(TaskItem(in_subs, in_item)); 
@@ -97,26 +97,7 @@ namespace
 			Channel* getChannel(const char* in_name);
 	} s_allSubs;
 	
-	void destroyItemsFor(SubsBase* in_subs) //{{{1
-	{
-		// 1. find current thread and associated queue
-		TaskImpl* t = s_impl();
-		// 2. lock it
-		Locker lock(*t);
-		// 3. loop through all and erase & delete items for in_subs (use TaskItemBase::isFor(SubsBase))
-		for (TaskImpl::iterator i = t->begin(); i != t->end(); ++i)
-		{
-			if (i->getSubs() == in_subs)
-			{
-				TaskImpl::iterator to_del = i;
-				i++;
-				to_del->destroy();
-				t->erase(to_del);
-				i--;
-			}
-		}
-		// [4. auto-unlock]
-	}
+
 	ulong threadFn(void* in_void) //{{{1
 	{
 		FactoryBase* in_factory = (FactoryBase*)(in_void);
@@ -177,23 +158,19 @@ namespace msg {
 		m_pChannel->push_back(this);
 	}
 
-	SubsBase::~SubsBase() //{{{1
+	void SubsBase::unsubscribe() //{{{1
 	{
 		ASSERT( m_pChannel != 0 );
+		Locker lock(s_allSubs);
+		// 1. deregister this subs
+		m_pChannel->erase(std::find(m_pChannel->begin(), m_pChannel->end(), this));
+		// 2. if this was the last subs under the group, delete it
+		if (m_pChannel->empty())
 		{
-			Locker lock(s_allSubs);
-			// 1. deregister this subs
-			m_pChannel->erase(std::find(m_pChannel->begin(), m_pChannel->end(), this));
-			// 2. if this was the last subs under the group, delete it
-			if (m_pChannel->empty())
-			{
-				if (m_pChannel->m_self != AllSubs::iterator(0))
-					s_allSubs.erase(m_pChannel->m_self);
-				delete m_pChannel;
-			}
+			if (m_pChannel->m_self != AllSubs::iterator(0))
+				s_allSubs.erase(m_pChannel->m_self);
+			delete m_pChannel;
 		}
-		// 3. go through the task queue and delete all messages destined to this subs
-		destroyItemsFor(this);
 	}
 
 void SubsBase::publish() const //{{{1
@@ -202,7 +179,7 @@ void SubsBase::publish() const //{{{1
 	for (std::list<msg::SubsBase*>::iterator i = m_pChannel->begin(); i != m_pChannel->end(); i++)
 	{
 		if (*i != this)
-			(*i)->m_taskImpl.push_back_locked(*i, createWrapped()); // thread safe
+			(*i)->m_taskImpl.push_back_locked(*i, create()); // thread safe
 	}
 }
 
@@ -230,6 +207,28 @@ void waitFor(SubsBase& in_subs) //{{{1
 {
 	while (processSubs() != &in_subs)
 		;
+}
+namespace detail {
+	void destroyItemsFor(SubsBase* in_subs) //{{{1
+	{
+		// 1. find current thread and associated queue
+		TaskImpl* t = s_impl();
+		// 2. lock it
+		Locker lock(*t);
+		// 3. loop through all and erase & delete items for in_subs (use TaskItemBase::isFor(SubsBase))
+		for (TaskImpl::iterator i = t->begin(); i != t->end(); ++i)
+		{
+			if (i->getSubs() == in_subs)
+			{
+				TaskImpl::iterator to_del = i;
+				i++;
+				to_del->destroy();
+				t->erase(to_del);
+				i--;
+			}
+		}
+		// [4. auto-unlock]
+	}
 }
 //}}}
 

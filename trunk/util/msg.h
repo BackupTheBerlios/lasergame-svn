@@ -146,12 +146,6 @@ namespace msg
 			~Task();
 	};
 
-	class SubsBase;
-	class WrappedBase
-	{
-		public: virtual void assignTo(SubsBase* in_subs) const = 0;
-	};
-
 	class Channel;
 	class bad_type {};
 	class SubsBase
@@ -162,28 +156,23 @@ namespace msg
 			void subscribe();
 			void subscribe(const char* in_name);
 			void subscribe(Channel* in_pChannel);
+			void unsubscribe();
 		public:
 			SubsBase();
 			Channel* getChannel() { return m_pChannel; }
-			virtual ~SubsBase();
-			virtual WrappedBase* createWrapped() const = 0;
+			virtual ~SubsBase() { }
+			virtual void* create() const = 0;
+			virtual void destroy(void* in_data) const = 0;
 			virtual void checkType(SubsBase*) const = 0;
+			virtual void assign(void*) = 0;
 			void publish() const;
 			operator Channel* () { return m_pChannel; }
 	};
 
-	template <class T> class Subs;
-
-	template <class T> class Wrapped : public WrappedBase
-	{
-		T m_data;
-		public:
-			Wrapped(const T& in_data) : m_data(in_data) {}
-			void assignTo(SubsBase* in_subs) const
-			{
-				(dynamic_cast< Subs<T>* >(in_subs))->value = m_data;
-			}
-	};
+	namespace detail {
+		// go through the task queue and delete all messages destined to this subs
+		void destroyItemsFor(SubsBase*);
+	}
 
 	template <class T> class Subs : public SubsBase
 	{
@@ -194,15 +183,15 @@ namespace msg
 			Subs() { subscribe(); }
 			Subs(const char* in_name) { subscribe(in_name); }
 			Subs(Channel* in_pChannel) { subscribe(in_pChannel); }
-			virtual WrappedBase* createWrapped() const
-			{
-				return new Wrapped<T>(value);
-			}
+			virtual ~Subs() { unsubscribe(); detail::destroyItemsFor(this); }
+			virtual void* create() const { return new T(value); }
+			virtual void destroy(void* in_data) const { delete (T*)in_data; }
 			virtual void checkType(SubsBase* in_subs) const
 			{
 				if (dynamic_cast<Subs<T>*>(in_subs) == 0)
 					throw bad_type();
 			}
+			virtual void assign(void * in_data) { value = *(T*)in_data; }
 	};
 	
 	SubsBase* processSubs();
