@@ -17,7 +17,7 @@ namespace
 			void set(const int & in_int) { m_int = in_int; }
 	};
 	
-	class TestRun : public Runnable
+	class TestRun : public Runnable //{{{1
 	{
 		private:
 			TestRun(const TestRun&) {}
@@ -43,18 +43,18 @@ namespace
 		REQUIRE( receiver == 5 );
 	} 
 
-	int goDist(int )
+	int goDist(int ) //{{{1
 	{
 		return 0;
 	};
 	
 	AUTOTEST(subTask) //{{{1
 	{
-		//Task t(helper(&goDist, 1));
+		//Task t(Factory(&goDist, 1));
 		// wait(q);
-		Task a(new Helper<TestRun, int>(1));
-		Task b(helper<TestRun>(2));
-		TASK(TestRun, 3);
+		Task a(new Factory<TestRun, int>(1));
+		Task b(factory<TestRun>(2));
+		TASK(TestRun, (3));
 	}
 	
 	struct Bool { bool m_bool; }; //{{{1
@@ -74,7 +74,30 @@ namespace
 	AUTOTEST(channel) //{{{1
 	{
 		Subs<Bool> quit;
-		TASK(A, quit.getChannel());
+		TASK(A, (quit.getChannel()));
+	}
+
+	class B : public Runnable //{{{1
+	{
+		Subs<Bool> m_a, m_b;
+		public:
+			B(Channel* in_a, Channel* in_b) : m_a(in_a), m_b(in_b) {}
+			virtual void main()
+			{
+				m_b.publish();
+			}
+		//static FactoryBase* fac(Channel* in_a, Channel* in_b) { return new Factory<B,Channel*,Channel*>(in_a, in_b); }
+			static FactoryBase* fac(Channel* in_a, Channel* in_b) { return factory<B>(in_a, in_b); }
+	};
+
+	AUTOTEST(waitFor) //{{{1
+	{
+		Subs<Bool> a;
+		Subs<Bool> b;
+		Task aa(new Factory<B, Channel*, Channel*>(a, b));
+		Task bb(factory<B>(a.getChannel(), b.getChannel()));
+		Task cc(B::fac(a, b));
+		wait(b);
 	}
 	//}}}
 }

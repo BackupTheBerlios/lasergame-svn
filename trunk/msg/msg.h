@@ -53,25 +53,90 @@
 
 namespace msg
 {
-	/// Class for a computational context (can accept messages)
 	class TaskImpl;
 	
 	class Runnable { public: virtual void main() = 0; virtual ~Runnable() {} };
 	
-	class HelperBase { public: TaskImpl* m_taskImpl; virtual Runnable* create() = 0; };
+	class FactoryBase { public: TaskImpl* m_taskImpl; virtual Runnable* create() = 0; };
 
-	template <class What, class Par1> class Helper : public HelperBase
+	// class factories templates {{{1
+	struct UnusedTag {};
+	
+	template <class What, class P1=UnusedTag, class P2=UnusedTag, class P3=UnusedTag, class P4=UnusedTag> //{{{2
+		class Factory : public FactoryBase
 	{
-		Par1 m_par1;
+		P1 m_par1; P2 m_par2; P3 m_par3; P4 m_par4;
 		public:
-			Helper(const Par1 in_par1) : m_par1(in_par1) {}
-			virtual Runnable* create() { return new What(m_par1); }
+			Factory(const P1 in_p1, const P2 in_p2) : m_par1(in_p1), m_par2(in_p2), m_par3(in_p3), m_par4(in_p4) {}
+			virtual Runnable* create() { return new What(m_par1, m_par2); }
 	};
 
-	template <class What, class Par1> HelperBase* helper(const Par1 in_par1)
+	template <class What, class P1, class P2, class P3> //{{{2
+		class Factory<What, P1, P2, P3, UnusedTag> : public FactoryBase
 	{
-		return new Helper<What, Par1>(in_par1);
+		P1 m_1; P2 m_2; P3 m_3;
+		public:
+			Factory(const P1 in_1, const P2 in_2, const P3 in_3) : m_1(in_1), m_2(in_2), m_3(in_3) {}
+			virtual Runnable* create() { return new What(m_1, m_2); }
+	};
+
+	template <class What, class P1, class P2> //{{{2
+		class Factory<What, P1, P2, UnusedTag, UnusedTag> : public FactoryBase
+	{
+		P1 m_1; P2 m_2;
+		public:
+			Factory(const P1 in_1, const P2 in_2) : m_1(in_1), m_2(in_2) {}
+			virtual Runnable* create() { return new What(m_1, m_2); }
+	};
+
+	template <class What, class P1> //{{{2
+		class Factory<What, P1, UnusedTag, UnusedTag, UnusedTag> : public FactoryBase
+	{
+		P1 m_1;
+		public:
+			Factory(const P1 in_1) : m_1(in_1) {}
+			virtual Runnable* create() { return new What(m_1); }
+	};
+
+	template <class What> //{{{2
+		class Factory<What, UnusedTag, UnusedTag, UnusedTag, UnusedTag> : public FactoryBase
+	{
+		public:
+			virtual Runnable* create() { return new What(); }
+	};
+	//}}}1
+	
+	// factories making helpers {{{1
+	template <class What> //{{{2
+		FactoryBase* factory()
+	{
+		return new Factory<What>();
 	}
+	
+	template <class What, class P1>  //{{{2
+		FactoryBase* factory(const P1 in_p1)
+	{
+		return new Factory<What, P1>(in_p1);
+	}
+
+	template <class What, class P1, class P2>  //{{{2
+		FactoryBase* factory(const P1 in_p1, const P2 in_p2)
+	{
+		return new Factory<What, P1, P2>(in_p1, in_p2);
+	}
+	
+	template <class What, class P1, class P2, class P3>  //{{{2
+		FactoryBase* factory(const P1 in_p1, const P2 in_p2, const P3 in_p3)
+	{
+		return new Factory<What, P1, P2, P3>(in_p1, in_p2, in_p3);
+	}
+
+	template <class What, class P1, class P2, class P3, class P4>  //{{{2
+		FactoryBase* factory(const P1 in_p1, const P2 in_p2, const P3 in_p3, const P4 in_p4)
+	{
+		return new Factory<What, P1, P2, P3, P4>(in_p1, in_p2, in_p3, in_p4);
+	}
+	//}}}1
 
 #ifndef JOIN
 #	define JOIN( X, Y ) DO_JOIN( X, Y )
@@ -79,7 +144,7 @@ namespace msg
 #	define DO_JOIN2( X, Y ) X##Y
 #endif
 
-#	define TASK(a,b) Task JOIN(unique,__LINE__)(helper<a>(b))
+#	define TASK(a,b) Task JOIN(unique,__LINE__)(factory<a> b)
 
 	class Task
 	{
@@ -87,7 +152,7 @@ namespace msg
 		TaskImpl* m_pimpl;
 		public:
 			/// creates thread
-			Task(HelperBase* in_helper);
+			Task(FactoryBase* in_factory);
 			/// waits for its thread to finish
 			~Task();
 	};
@@ -112,6 +177,7 @@ namespace msg
 			virtual ~SubsBase();
 			virtual WrappedBase* createWrapped() const = 0;
 			void publish() const;
+			operator Channel* () { return m_pChannel; }
 	};
 
 	template <class T> class Wrapped : public WrappedBase

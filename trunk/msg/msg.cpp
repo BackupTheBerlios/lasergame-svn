@@ -37,7 +37,7 @@ namespace msg
 		public:
 			TaskItem(SubsBase* in_targetSubs, WrappedBase* in_user) 
 				: m_subs(in_targetSubs), m_user(in_user) {}
-			bool isFor(SubsBase* in_subs) { return m_subs == in_subs; }
+			SubsBase* getSubs() { return m_subs; }
 			void destroy() { delete m_user; m_user = 0; }
 			void assign() { m_user->assignTo(m_subs); destroy(); }
 	};
@@ -92,7 +92,7 @@ namespace
 			Channel* getChannel(const char* in_name);
 	} s_allSubs;
 	
-	TaskItem getItem() //{{{1
+	SubsBase* processItem() //{{{1
 	{
 		// 1. find current thread and associated queue
 		TaskImpl* t = s_impl();
@@ -103,9 +103,10 @@ namespace
 			t->wait();
 		if (!t->running())
 			throw stop();
-		TaskItem i(t->front());
+		SubsBase* ret = t->front().getSubs();
+		t->front().assign();
 		t->pop_front();
-		return i;
+		return ret;
 		// [4. auto-unlock]
 	}
 
@@ -118,7 +119,7 @@ namespace
 		// 3. loop through all and erase & delete items for in_subs (use TaskItemBase::isFor(SubsBase))
 		for (TaskImpl::iterator i = t->begin(); i != t->end(); ++i)
 		{
-			if (i->isFor(in_subs))
+			if (i->getSubs() == in_subs)
 			{
 				TaskImpl::iterator to_del = i;
 				i++;
@@ -131,12 +132,13 @@ namespace
 	}
 	ulong threadFn(void* in_void) //{{{1
 	{
-		HelperBase* in_helper = (HelperBase*)(in_void);
-		s_impl = in_helper->m_taskImpl;
+		FactoryBase* in_factory = (FactoryBase*)(in_void);
+		// set thread specific variable s_impl to point to the support class for this thread
+		s_impl = in_factory->m_taskImpl;
 		// create the user object
-		Runnable* dummy = in_helper->create();
-		// delete in_helper since it is no longer needed
-		delete in_helper;
+		Runnable* dummy = in_factory->create();
+		// delete in_Factory since it is no longer needed
+		delete in_factory;
 		// call user supplied main
 		try { dummy->main(); } catch(...) {}
 		// delete the user object
@@ -206,18 +208,23 @@ SubsBase::~SubsBase() //{{{1
 void wait() //{{{1
 {
 	// remove the item from the top of the current task queue, thread safe, blocking
-	TaskItem item = getItem();
 	// assign the data according to the subscription
-	item.assign();   
+	processItem();
+}
+
+void wait(SubsBase& in_subs) //{{{
+{
+	while (processItem() != &in_subs)
+		;
 }
 //}}}
 
-Task::Task(HelperBase* in_helper) //{{{1
+Task::Task(FactoryBase* in_Factory) //{{{1
 {
 	// create support structures for messages
 	m_pimpl = new TaskImpl();
-	in_helper->m_taskImpl = m_pimpl;
-	m_id = thread::create(threadFn, in_helper);
+	in_Factory->m_taskImpl = m_pimpl;
+	m_id = thread::create(threadFn, in_Factory);
 }
 
 Task::~Task() //{{{1
