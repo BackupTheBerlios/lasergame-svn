@@ -117,13 +117,15 @@ namespace msg {
 			typedef std::map<std::string, Channel*> Children;
 			typedef std::list<SubsBase*> SubsList;
 		private:
-			SubsList m_subs;
-			Children m_children;
+			SubsList m_subs;     // destinations
+			Children m_children; // sub-channels
+			int m_numOut;        // pure putputs
 		public:
+			Channel() : m_numOut(0) {}
 			virtual ~Channel() {}
 			bool empty() 
 			{ 
-				return m_subs.empty() && m_children.empty(); 
+				return m_subs.empty() && m_children.empty() && m_numOut == 0 ; 
 			}
 			void connect(SubsBase* in_subs) 
 			{
@@ -141,16 +143,27 @@ namespace msg {
 			void erase(Children::iterator in_child)
 			{
 				m_children.erase(in_child);
+				// if that was the last child channel and there are no subscription, delete it
+				if (empty())
+					delete this;
 			}
 			Channel* getChannel(const char* in_name);
 			void publish(const SubsBase* in_subs)
 			{
 				for (SubsList::iterator i = m_subs.begin(); i != m_subs.end(); i++)
 				{
-					if (*i != in_subs)
+					if (*i != in_subs) // do not publish to the calling subs
 						(*i)->postItem(in_subs->create()); // locks SubsBase::taskImpl
 				}
 			}
+#if 0
+			// will need two params - who's outputing and where to not put it
+			void publish()
+			{
+				for (SubsList::iterator i = m_subs.begin(); i != m_subs.end(); i++)
+					(*i)->postItem(in_subs->create()); // locks SubsBase::taskImpl
+			}
+#endif
 	};
 
 	class BoundChannel : public Channel //{{{1
