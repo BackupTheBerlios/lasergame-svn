@@ -8,17 +8,11 @@
 */
 
 #include "dist.h"
-#include "Double.h"
 #include "util/unit-test.h"
 
 using namespace num;
 
 namespace {
-
-typedef Double Number;	
-typedef DistT<Number> Dist;
-typedef MilimT<Number> Milim;
-typedef MeterT<Number> Meter;
 
 AUTOTEST(test) //{{{1
 {
@@ -34,10 +28,10 @@ AUTOTEST(test) //{{{1
 	CPPUNIT_ASSERT( !a.lt((Milim(1) + Milim(counter))*counter/2) ) ;
 }
 
-AUTOTEST(testCompare)
+AUTOTEST(testCompare) //{{{1
 {
-	Milim a(Number(1000)), c(Number(1500)), d(Number(-500)), e;
-	Meter b(Number(1));
+	Milim a(1000), c(1500), d(-500), e;
+	Meter b(1);
 	CPPUNIT_ASSERT ( a == b);
 	CPPUNIT_ASSERT ( a < c );
 	CPPUNIT_ASSERT ( c > a );
@@ -54,10 +48,10 @@ AUTOTEST(testCompare)
 	CPPUNIT_ASSERT ( !e.gt() );
 }
 
-AUTOTEST(testArit)
+AUTOTEST(testArit) //{{{1
 {
 	int i;
-	Meter a(Number(1,1000));
+	Meter a(make<double>(1,1000));
 
 	for (i = 0; i < 10; i++)
 	  a *= 2;
@@ -75,7 +69,7 @@ AUTOTEST(testArit)
 	CPPUNIT_ASSERT( a.eq(Milim(1000)) );
 
 	for (i = 0; i < 1000; i++)
-	  a -= Meter(Number(1,100));
+	  a -= Meter(make<double>(1,100));
 
 	CPPUNIT_ASSERT( a.eq(-Milim(9000)) );
 
