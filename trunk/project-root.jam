@@ -1,0 +1,10 @@
+using testing ;
+
+rule my-test ( name : sources * )
+{
+	unit-test $(name) : $(sources) ;
+}
+
+IMPORT $(__name__) : my-test : : my-test ;
+
+
