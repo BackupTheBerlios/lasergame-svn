@@ -1,0 +1,20 @@
+# $Id$
+
+obj simul : simul.cpp ;
+#obj Move : Move.cpp : <link>static ;
+#obj EsterUSB : EsterUSB.cpp : <link>static ;
+#obj MCL : MCL.cpp : <link>static ;
+#libs = /util//thread /util//lock /util//semaphore /number//number Action ;
+
+libs = /util//thread /util//msg ;
+#lib controller : EsterSimul Move EsterUSB MCL /cam//cam /mcl//mcl $(libs) : <link>static ;
+
+unit-test simul-test : simul-test.cpp simul $(libs) ;
+#my-test move-test : MoveTest.cpp Move EsterSimul $(libs) ;
+#my-test ball-scan-test : BallScanTest.cpp EsterSimul Move $(libs) ;
+#my-test mcl-test : MCLTest.cpp /mcl//mcl MCL Move EsterSimul $(libs) ;
+
+#exe esterusbmain : EsterUSBMain.cpp controller ;
+
+#alias test : action-test ester-simul-test move-test ball-scan-test mcl-test ;
+
