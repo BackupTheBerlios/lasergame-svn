@@ -1,14 +1,11 @@
+// $Id$
+// Copyright (C) 2004, Zbynek Winkler <zw at robotika cz>
+
 #ifndef POSE_H_INCLUDED
 #define POSE_H_INCLUDED 1
 
-/** @file
-* 
-*         %Point and %Pose definitions.
-*         
-* @author Zbynek Winkler (c) 2004 <zw at robotika cz>
-*
-* $Id$
-*/
+/// @file
+/// Point and Pose definitions
 
 #include <ostream>
 #include <iomanip>
@@ -16,10 +13,6 @@
 #include "dist.h"
 #include "angle.h"
 #include "rnd.h"
-
-#ifndef DOXYGEN_SKIP
-#define DOXYGEN_SKIP(X) X
-#endif
 
 namespace num {
 
@@ -193,6 +186,12 @@ public:
 	PoseT & offsetBy(const PointT<T> & in_off) //{{{2
 	{
 		return this->offsetBy(in_off.x(), in_off.y());
+	}
+
+	/// Transforms point to global coordinates
+	PointT<T> transform(const PointT<T> & in_point) const //{{{2
+	{
+		return PoseT(*this).offsetBy(in_point).point();
 	}
 
 	/// Calculate offset to be added in order to move to the specified place
