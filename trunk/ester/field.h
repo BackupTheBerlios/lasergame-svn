@@ -7,6 +7,8 @@
 
 #include <list>
 
+class Balls : public std::list<num::Point> {};
+
 class Field
 {
 	private:
@@ -14,8 +16,7 @@ class Field
 		int m_score;
 		num::Point m_palm1;
 		num::Point m_palm2;
-		std::list<num::Point> m_balls;
-		
+
 		uint32_t m_ballSeed;
 		uint32_t m_palmSeed;
 		bool m_verbose;
@@ -49,6 +50,8 @@ class Field
 		num::Dist palm2Dist(const num::Point & in_p) const { return m_palm2.distanceTo(in_p); }
 
 		int tryEatBall(const num::Pose & in_pose, const num::Dist & BALL_EAT_DIST);
+		
+		Balls m_balls;
 };
 
 #endif // ESTER_FILED_H_INCLUDED
