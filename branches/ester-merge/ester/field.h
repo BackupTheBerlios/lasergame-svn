@@ -34,7 +34,7 @@ class Field
 		void printStat();
 		
 	public:
-		Field(int in_flags);
+		Field(int in_flags = 0);
 		~Field();
 		void setPalm(int in_crossingX = 0, int in_crossingY = 0);
 		void randPalm(uint32_t in_seed = 0);
