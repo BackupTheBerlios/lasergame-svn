@@ -201,6 +201,35 @@ AUTOTEST(testBallEating) //{{{1
 	
 	// TODO who to test this further?
 }
+
+AUTOTEST(testCamera) //{{{1
+{
+	Subs<int> dir;
+	Subs<Time> dt(dir, "time-change");
+	Subs<int> watchdog(dir, "watchdog");
+	Subs<Point> ball(dir, "ball");
+	Subs<Speed> req(dir, "speed-requested");
+	
+	Field field;
+	Task e(Simul::fac(dir, &field, 0));
+	waitFor(dt);         // wait until simulator is ready
+	
+	for (int i = 0; i < 20; i++)
+	{	
+		watchdog.publish();  // step forward
+		waitFor(dt);
+	}
+	req.value.m_angular = AngularSpeed(Deg(-180));
+	req.publish();
+	for (int i = 0; i < 55; i++)
+	{
+		watchdog.publish();  // step forward
+		waitFor(dt);
+		//cout << ball.m_off.n() << endl;
+	}
+	REQUIRE( ball.value.x().eq(Milim(560), Milim(20)) );
+	REQUIRE( ball.value.y().eq(Dist(), Milim(20)) );
+}
 //}}}
 
 #if 0
@@ -240,35 +269,6 @@ AUTOTEST(testTruePose) //{{{2
 }
 //}}}
 
-//{{{1 testCamera()
-struct TestCamera : public Action //{{{2
-{
-	virtual int main()
-	{
-		msg::Offset ballPos;
-		Subs s("cz.robotika.ester.ball_pos", &ballPos);
-		msg::Speed requestedSpeed;
-		Regs r1("cz.robotika.ester.requested_speed", &requestedSpeed);
-		for (int i = 0; i < 20; i++)
-			execute();
-		requestedSpeed.m_time = ballPos.m_time;
-		requestedSpeed.m_omega = ASpeed(Deg(-180));
-		for (int i = 0; i < 55; i++)
-		{
-			execute();
-			//cout << ballPos.m_off.n() << endl;
-		}
-		ASSERT( ballPos.m_off.m_f.eq(Milim(560), Milim(15)) );
-		ASSERT( ballPos.m_off.m_s.eq(Dist(), Milim(15)) );
-		return 0;
-	}
-};
-
-AUTOTEST(testCamera) //{{{2
-{
-	EsterSimul e(0);
-	TestCamera tc;
-	g_main.waitForAny();
 }
 //}}}1
 #endif

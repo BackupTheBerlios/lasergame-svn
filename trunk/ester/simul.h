@@ -49,7 +49,7 @@ class Simul : public msg::Runnable
 		int m_side;
 		
 		num::Rnd m_rnd;
-		//int m_camTick;
+		int m_camTick;
 		
 	public:
 		Simul(msg::Channel* in_pChannel, Field* in_field, int in_side);

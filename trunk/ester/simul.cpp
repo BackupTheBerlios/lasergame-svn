@@ -107,6 +107,42 @@ double calcGP2top(const Field& in_field, const Pose & in_pose) //{{{1
 	else
 		return 0;
 }
+
+Point calcCamera(const Balls& in_balls, const Pose & in_pose) //{{{1
+{
+	Balls::const_iterator iter;
+	Angle min = Deg(180);
+	Point minOff;
+
+	//cout << "upCamera()" << endl;
+	for (iter = in_balls.begin(); iter != in_balls.end(); ++iter)
+	{
+		Point o = in_pose.offsetTo(*iter);
+		Dist d = o;
+		Angle a = o;
+		if (a < Angle()) a *= -1;
+		//cout << o.n() << " --- " << (*iter).n() << endl;
+		//cout << setw(5) << a.rad() << " (" << (*iter).n() << ")" << endl;
+		if (d > Milim(100))
+		{
+			if (a.lt(min, Deg(3)))
+			{
+				//cout << "### min:" << min.rad() << " -> " << a.rad() << ", " << d.m() << endl;
+				min = a;
+				minOff = o;
+			}
+			else if (a.lt(min+Deg(3)) && d < Dist(minOff))
+			{
+				//cout << "*** dist: " << Dist(minOff).m() << " -> " << d.m() << endl;
+				//cout << "@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@" << endl;
+				min = a;
+				minOff = o;
+			}
+		}
+	}
+	return min < Deg(22) ? minOff : Point(Milim(-1), Dist());
+	//cout << Angle(m_ballPos.m_off).deg() << endl << endl;
+}
 //}}}
 }
 
@@ -127,7 +163,7 @@ Simul::Simul(msg::Channel* in_p, Field* in_field, int in_side) //{{{1
 		m_gp2top      (in_p, "gp2top"),
 		m_reqShoot    (in_p, "shoot-req", this, &Simul::reqShoot),
 		
-		AERR(0), FERR(0), DERR(0) 
+		AERR(0), FERR(0), DERR(0), m_camTick(0)
 {
 	ASSERT( in_field != 0 );
 	//m_seed.value = time(NULL);
@@ -181,6 +217,13 @@ void Simul::main() //{{{1
 		m_numBallsIn.value += m_field.tryEatBall(m_pose.value, BALL_EAT_DIST());
 		m_numBallsIn.publish();
 
+		++m_camTick %= 5;
+		if (m_camTick == 0) 
+		{
+			m_ballPos.value = calcCamera(m_field.m_balls, m_pose.value);
+			m_ballPos.publish();
+		}
+		
 		//upCamera();
 		//upEnemy();
 		//checkPalms();
@@ -242,47 +285,6 @@ void EsterSimul::upBalls() //{{{1
 			m_numBallsIn--;
 		}
 	}
-}
-
-void EsterSimul::upCamera() //{{{1
-{
-	++m_camTick %= 5;
-	if (m_camTick) return;
-
-	using namespace num;
-	list<Place>::iterator iter;
-	Angle min = Deg(180);
-	Offset minOff;
-
-	//cout << "upCamera()" << endl;
-	for (iter = m_balls.begin(); iter != m_balls.end(); ++iter)
-	{
-		Offset o = m_pose.m_pose.offsetTo(*iter);
-		Dist d = o;
-		Angle a = o;
-		if (a < Angle()) a *= -1;
-		//cout << o.n() << " --- " << (*iter).n() << endl;
-		//cout << setw(5) << a.rad() << " (" << (*iter).n() << ")" << endl;
-		if (d > Milim(100))
-		{
-			if (a.lt(min, Deg(3)))
-			{
-				//cout << "### min:" << min.rad() << " -> " << a.rad() << ", " << d.m() << endl;
-				min = a;
-				minOff = o;
-			}
-			else if (a.lt(min+Deg(3)) && d < Dist(minOff))
-			{
-				//cout << "*** dist: " << Dist(minOff).m() << " -> " << d.m() << endl;
-				//cout << "@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@" << endl;
-				min = a;
-				minOff = o;
-			}
-		}
-	}
-	m_ballPos.m_time = m_timeChange.m_time;
-	m_ballPos.m_off = min < Deg(22) ? minOff : Offset(Milim(-1), Dist());
-	//cout << Angle(m_ballPos.m_off).deg() << endl << endl;
 }
 
 void EsterSimul::upEnemy() //{{{
