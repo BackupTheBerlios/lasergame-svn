@@ -92,24 +92,6 @@ namespace
 			Channel* getChannel(const char* in_name);
 	} s_allSubs;
 	
-	SubsBase* processItem() //{{{1
-	{
-		// 1. find current thread and associated queue
-		TaskImpl* t = s_impl();
-		// 2. lock it
-		Locker lock(*t);
-		// 3. pop and return the item
-		while (t->empty() && t->running())
-			t->wait();
-		if (!t->running())
-			throw stop();
-		SubsBase* ret = t->front().getSubs();
-		t->front().assign();
-		t->pop_front();
-		return ret;
-		// [4. auto-unlock]
-	}
-
 	void destroyItemsFor(SubsBase* in_subs) //{{{1
 	{
 		// 1. find current thread and associated queue
@@ -205,16 +187,29 @@ SubsBase::~SubsBase() //{{{1
 	destroyItemsFor(this);
 }
 
-void wait() //{{{1
+// remove the item from the top of the current task queue, thread safe, blocking
+// assign the data according to the subscription
+SubsBase* processSubs() //{{{1
 {
-	// remove the item from the top of the current task queue, thread safe, blocking
-	// assign the data according to the subscription
-	processItem();
+	// 1. find current thread and associated queue
+	TaskImpl* t = s_impl();
+	// 2. lock it
+	Locker lock(*t);
+	// 3. pop and return the item
+	while (t->empty() && t->running())
+		t->wait();
+	if (!t->running())
+		throw stop();
+	SubsBase* ret = t->front().getSubs();
+	t->front().assign();
+	t->pop_front();
+	return ret;
+	// [4. auto-unlock]
 }
 
-void wait(SubsBase& in_subs) //{{{
+void waitFor(SubsBase& in_subs) //{{{
 {
-	while (processItem() != &in_subs)
+	while (processSubs() != &in_subs)
 		;
 }
 //}}}

@@ -200,10 +200,8 @@ namespace msg
 			}
 	};
 	
-	/// Awaits a single message
-	void wait();
-	/// Awaits a message for in_subs
-	void wait(SubsBase& in_subs);
+	SubsBase* processSubs();
+	void waitFor(SubsBase& in_subs);
 }
 
 #endif // MSG_H_INCLUDED

@@ -29,7 +29,7 @@ namespace
 		receiver.value = 0;
 		sender.value = 5;
 		sender.publish();
-		wait();
+		processSubs();
 		REQUIRE( receiver.value == 5 );
 	} 
 
@@ -85,7 +85,7 @@ namespace
 		Task aa(new Factory<B, Channel*, Channel*>(a, b));
 		Task bb(factory<B>(a.getChannel(), b.getChannel()));
 		Task cc(B::fac(a, b));
-		wait(b);
+		waitFor(b);
 	}
 	//}}}
 }
