@@ -86,6 +86,10 @@ public:
 	{
 		return m_angle.deg();
 	}
+	double rad() const
+	{
+		return m_angle.rad();
+	}
 };
 
 class AngularAcc //{{{1
