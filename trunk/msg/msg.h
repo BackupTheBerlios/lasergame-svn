@@ -167,6 +167,7 @@ namespace msg
 			Channel* getChannel() { return m_pChannel; }
 			virtual ~SubsBase();
 			virtual WrappedBase* createWrapped() const = 0;
+			virtual void checkType(SubsBase*) const = 0;
 			void publish() const;
 			operator Channel* () { return m_pChannel; }
 	};
@@ -196,6 +197,11 @@ namespace msg
 			virtual WrappedBase* createWrapped() const
 			{
 				return new Wrapped<T>(value);
+			}
+			virtual void checkType(SubsBase* in_subs) const
+			{
+				if (dynamic_cast<Subs<T>*>(in_subs) == 0)
+					throw bad_type();
 			}
 	};
 	

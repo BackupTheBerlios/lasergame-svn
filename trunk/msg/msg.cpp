@@ -22,7 +22,6 @@
 #include <list>
 #include <string>
 #include <algorithm>
-#include <typeinfo>
 //#include <iostream>
 #include "util/thread.h"
 #include "util/assert.h"
@@ -162,13 +161,8 @@ namespace msg {
 		ASSERT( m_pChannel == 0 );
 		Locker lock(s_allSubs);
 		m_pChannel = s_allSubs.getChannel(in_name);
-		// check type
 		if (!m_pChannel->empty())
-		{
-			//cout << typeid(*this).name() << " X " << typeid(*m_pChannel->front()).name() << endl;
-			if ( typeid(*this) != typeid(*m_pChannel->front()))
-				throw bad_type();
-		}
+			m_pChannel->front()->checkType(this);
 		m_pChannel->push_back(this);
 	}
 
@@ -179,10 +173,7 @@ namespace msg {
 		m_pChannel = in_pChannel;
 		// check type
 		if (!m_pChannel->empty())
-		{
-			if ( typeid(*this) != typeid(*m_pChannel->front()))
-				throw bad_type();
-		}
+			m_pChannel->front()->checkType(this);
 		m_pChannel->push_back(this);
 	}
 
