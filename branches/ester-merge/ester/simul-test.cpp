@@ -1,4 +1,5 @@
 // $Id$
+// Copyright (C) 2004, Zbynek Winkler
 
 #include <iostream>
 using namespace std;
@@ -29,61 +30,53 @@ AUTOTEST(testTime) //{{{1
 }
 //}}}
 
-#if 0
-//{{{1 testFSpeed()
-struct TestFSpeed : public Action //{{{2
+AUTOTEST(testFSpeed) //{{{1
 {
-	int m_count;
-	virtual int main()
+	Subs<int> dir;
+	Subs<Time> dt(dir, "time-change");
+	Subs<int> watchdog(dir, "watchdog");
+	Subs<Speed> cur(dir, "speed-current");
+	Subs<Speed> req(dir, "speed-requested");
+	
+	Field field;
+	Task e(Simul::fac(dir, field, 0));
+	waitFor(dt);
+	int i = 0;
+
+	// accelerate
+	Time t = MSec(500);
+	req.value.m_linear = Milim(300);
+	//cout << req.value.m_linear.mm() << endl; 
+	req.publish();
+	while( t.gt() && cur.value.m_linear.lt(LinearSpeed(Milim(250))) )
 	{
-		using num::Milim; using num::MSec; using num::Time; using num::FSpeed;
-		msg::TimeChange dt;
-		Subs s1("time_change", &dt);
-		msg::Speed currentSpeed, requestedSpeed;
-		Subs s3("cz.robotika.ester.current_speed", &currentSpeed);
-		Regs r1("cz.robotika.ester.requested_speed", &requestedSpeed);
-		m_count = 0;
-		execute();
-
-		// accelerate
-		Time t = MSec(500);
-		requestedSpeed.m_time = dt.m_time;
-		requestedSpeed.m_v = Milim(300);
-		while( t.gt() && currentSpeed.m_v.lt(FSpeed(Milim(250))) )
-		{
-			execute();
-			t -= dt.m_dt;
-			m_count++;
-			//cout << t.ms() << ": " << currentSpeed.m_v.mm() << endl;
-		}
-		//cout << endl;
-		ASSERT( !currentSpeed.m_v.lt(FSpeed(Milim(250))) );
-
-		// decelerate
-		t = MSec(600);
-		requestedSpeed.m_time = dt.m_time;
-		requestedSpeed.m_v = Milim(0);
-		while( t.gt() && currentSpeed.m_v.gt() )
-		{
-			execute();
-			t -= dt.m_dt;
-			m_count++;
-			//cout << t.ms() << ": " << currentSpeed.m_v.mm() << endl;
-		}
-		ASSERT( !currentSpeed.m_v.gt() );
-		return 0;
+		t -= dt.value;
+		i++;
+		//cout << t.ms() << ": " << cur.value.m_linear.mm() << endl;
+		watchdog.publish();
+		waitFor(dt);
 	}
-};
+	//cout << endl;
+	REQUIRE( !cur.value.m_linear.lt(LinearSpeed(Milim(250))) );
 
-AUTOTEST(testFSpeed)                                                    //{{{2
-{
-	EsterSimul t2;
-	TestFSpeed t3;
-	g_main.waitForAny();
-	CPPUNIT_ASSERT_EQUAL( 136, t3.m_count );
+	// decelerate
+	t = MSec(600);
+	req.value.m_linear = Milim(0);
+	req.publish();
+	while( t.gt() && cur.value.m_linear.gt() )
+	{
+		t -= dt.value;
+		i++;
+		//cout << t.ms() << ": " << currentSpeed.m_v.mm() << endl;
+		watchdog.publish();
+		waitFor(dt);
+	}
+	REQUIRE( !cur.value.m_linear.gt() );
+	REQUIRE( i == 132); // 136
 }
 //}}}
 
+#if 0
 //{{{1 testMove()
 struct TestMove : public Action //{{{2
 {
