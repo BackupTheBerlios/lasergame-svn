@@ -27,6 +27,8 @@
 #include "util/assert.h"
 #include "util/msg.h"
 
+namespace { ulong threadFn(void* in_void); }
+
 namespace msg 
 { 
 	class TaskItem //{{{1
@@ -53,11 +55,13 @@ namespace msg
 
 	class TaskImpl : public std::list<TaskItem>, public thread::Lock, public thread::CondVar //{{{1
 	{
-		friend class Task;
-		thread::id_t m_thread;
-		bool m_running;
 		public:
-			TaskImpl() : m_running(true) { }
+			thread::id_t m_thread;
+			bool m_running;
+			Runnable* m_runnable;
+		
+		public:
+			TaskImpl() : m_running(true), m_runnable(0) { }
 			~TaskImpl() { ASSERT( empty() ); }
 			void wait() { thread::CondVar::wait(*this); }	
 			bool running() { return m_running; }
@@ -93,17 +97,13 @@ namespace
 	
 	ulong threadFn(void* in_void) //{{{1
 	{
-		FactoryBase* in_factory = (FactoryBase*)(in_void);
+		TaskImpl* in_taskImpl = (TaskImpl*)(in_void);
 		// set thread specific variable s_impl to point to the support class for this thread
-		s_impl = in_factory->m_taskImpl;
-		// create the user object
-		Runnable* dummy = in_factory->create();
-		// delete in_Factory since it is no longer needed
-		delete in_factory;
+		s_impl = in_taskImpl;
 		// call user supplied main
-		try { dummy->main(); } catch(...) {}
-		// delete the user object
-		delete dummy;
+		try { in_taskImpl->m_runnable->main(); } 
+		catch(stop) {} 
+		catch(...) { ASSERT( false ); }
 		return 0;
 	}
 	//}}}
@@ -193,50 +193,53 @@ namespace msg {
 		return ret->second;
 	}
 
-	SubsBase::SubsBase() : m_pChannel(0), m_taskImpl(*s_impl()) //{{{1
+	SubsBase::SubsBase() : m_pChannel(0), m_taskImpl(0) //{{{1
 	{
 	}
-
-	void SubsBase::subscribe() //{{{1
+	
+	SubsBase::operator Channel* () //{{{1
 	{
-		ASSERT( m_pChannel == 0 );
-		m_pChannel = new Channel();
+		ASSERT( m_pChannel != 0 );
+		return m_pChannel;
+	}
+
+	void SubsBase::subscribe(Channel* in_pChannel) //{{{1
+	{
+		ASSERT( m_taskImpl == 0 && m_pChannel == 0 );
+		m_taskImpl = s_impl();
+		if (in_pChannel == 0) in_pChannel = new Channel();
+		Locker lock(*in_pChannel);
+		m_pChannel = in_pChannel;
 		m_pChannel->connect(this);
 	}
 
 	void SubsBase::subscribe(Channel* in_parent, const char * in_name) //{{{1
 	{
 		using namespace std;
-		ASSERT( m_pChannel == 0 );
+		ASSERT( m_taskImpl == 0 && m_pChannel == 0 );
+		m_taskImpl = s_impl();
 		Locker lock(*in_parent);
 		m_pChannel = in_parent->getChannel(in_name);
 		m_pChannel->connect(this);
 	}
 
-	void SubsBase::subscribe(Channel* in_pChannel) //{{{1
-	{
-		ASSERT( m_pChannel == 0 );
-		Locker lock(*in_pChannel);
-		m_pChannel = in_pChannel;
-		m_pChannel->connect(this);
-	}
-
 	void SubsBase::unsubscribe() //{{{1
 	{
-		ASSERT( m_pChannel != 0 );
+		ASSERT( m_taskImpl != 0 && m_pChannel != 0 );
 		Locker lock(*m_pChannel);
 		m_pChannel->disconnect(this);
 	}
 
-void SubsBase::publish() const //{{{1
-{
-	Locker lock(*m_pChannel);
-	m_pChannel->publish(this);
-}
+	void SubsBase::publish() const //{{{1
+	{
+		ASSERT( m_taskImpl != 0 && m_pChannel != 0 );
+		Locker lock(*m_pChannel);
+		m_pChannel->publish(this);
+	}
 
-void SubsBase::postItem(void* in_data)
+void SubsBase::postItem(void* in_data) //{{{1
 {
-	m_taskImpl.push_back_locked(this, in_data); // thread safe
+	m_taskImpl->push_back_locked(this, in_data); // thread safe
 }
 // remove the item from the top of the current task queue, thread safe, blocking
 // assign the data according to the subscription
@@ -260,6 +263,7 @@ SubsBase* processSubs() //{{{1
 
 void waitFor(SubsBase& in_subs) //{{{1
 {
+	ASSERT( in_subs.m_pChannel != 0 && in_subs.m_taskImpl != 0 );
 	while (processSubs() != &in_subs)
 		;
 }
@@ -284,21 +288,30 @@ namespace detail {
 		}
 		// [4. auto-unlock]
 	}
-}
 //}}}
+}
 
-Task::Task(FactoryBase* in_factory) //{{{1
+Task::Task(Runnable* in_runnable) //{{{1
 {
-	// create support structures for messages
+	m_delete = true;
 	m_pimpl = new TaskImpl();
-	in_factory->m_taskImpl = m_pimpl;
-	m_pimpl->m_thread = thread::create(threadFn, in_factory);
+	m_pimpl->m_runnable = in_runnable;
+	m_pimpl->m_thread = thread::create(threadFn, m_pimpl);
+}
+
+Task::Task(Runnable& in_runnable) //{{{1
+{
+	m_delete = false;
+	m_pimpl = new TaskImpl();
+	m_pimpl->m_runnable = &in_runnable;
+	m_pimpl->m_thread = thread::create(threadFn, m_pimpl);
 }
 
 Task::~Task() //{{{1
 {
 	m_pimpl->stop();
 	thread::join(m_pimpl->m_thread);
+	if (m_delete) delete m_pimpl->m_runnable;
 	delete m_pimpl;
 }
 //}}}

@@ -55,99 +55,14 @@ namespace msg
 	
 	class Runnable { public: virtual void main() = 0; virtual ~Runnable() {} };
 	
-	class FactoryBase 
-	{ 
-		public: 
-			TaskImpl* m_taskImpl; 
-			virtual Runnable* create() = 0; 
-			virtual ~FactoryBase() {} 
-	};
-
-	// class factories templates {{{1
-	struct UnusedTag { void func() {} };
-	
-	template <class What, class P1=UnusedTag, class P2=UnusedTag, class P3=UnusedTag, class P4=UnusedTag> //{{{2
-		class Factory : public FactoryBase
-	{
-		P1 m_par1; P2 m_par2; P3 m_par3; P4 m_par4;
-		public:
-			Factory(const P1 in_p1, const P2 in_p2) : m_par1(in_p1), m_par2(in_p2), m_par3(in_p3), m_par4(in_p4) {}
-			virtual Runnable* create() { return new What(m_par1, m_par2); }
-	};
-
-	template <class What, class P1, class P2, class P3> //{{{2
-		class Factory<What, P1, P2, P3, UnusedTag> : public FactoryBase
-	{
-		P1 m_1; P2 m_2; P3 m_3;
-		public:
-			Factory(const P1 in_1, const P2 in_2, const P3 in_3) : m_1(in_1), m_2(in_2), m_3(in_3) {}
-			virtual Runnable* create() { return new What(m_1, m_2, m_3); }
-	};
-
-	template <class What, class P1, class P2> //{{{2
-		class Factory<What, P1, P2, UnusedTag, UnusedTag> : public FactoryBase
-	{
-		P1 m_1; P2 m_2;
-		public:
-			Factory(const P1 in_1, const P2 in_2) : m_1(in_1), m_2(in_2) {}
-			virtual Runnable* create() { return new What(m_1, m_2); }
-	};
-
-	template <class What, class P1> //{{{2
-		class Factory<What, P1, UnusedTag, UnusedTag, UnusedTag> : public FactoryBase
-	{
-		P1 m_1;
-		public:
-			Factory(const P1 in_1) : m_1(in_1) {}
-			virtual Runnable* create() { return new What(m_1); }
-	};
-
-	template <class What> //{{{2
-		class Factory<What, UnusedTag, UnusedTag, UnusedTag, UnusedTag> : public FactoryBase
-	{
-		public:
-			virtual Runnable* create() { return new What(); }
-	};
-	//}}}1
-	
-	// factories making helpers {{{1
-	template <class What> //{{{2
-		FactoryBase* factory()
-	{
-		return new Factory<What>();
-	}
-	
-	template <class What, class P1>  //{{{2
-		FactoryBase* factory(const P1 in_p1)
-	{
-		return new Factory<What, P1>(in_p1);
-	}
-
-	template <class What, class P1, class P2>  //{{{2
-		FactoryBase* factory(const P1 in_p1, const P2 in_p2)
-	{
-		return new Factory<What, P1, P2>(in_p1, in_p2);
-	}
-	
-	template <class What, class P1, class P2, class P3>  //{{{2
-		FactoryBase* factory(const P1 in_p1, const P2 in_p2, const P3 in_p3)
-	{
-		return new Factory<What, P1, P2, P3>(in_p1, in_p2, in_p3);
-	}
-
-	template <class What, class P1, class P2, class P3, class P4>  //{{{2
-		FactoryBase* factory(const P1 in_p1, const P2 in_p2, const P3 in_p3, const P4 in_p4)
-	{
-		return new Factory<What, P1, P2, P3, P4>(in_p1, in_p2, in_p3, in_p4);
-	}
-	//}}}1
-
 	class Task //{{{1
 	{
 		TaskImpl* m_pimpl;
+		bool m_delete;
 		public:
 			/// creates thread
-			Task(FactoryBase* in_factory);
+			Task(Runnable* in_runnable);
+			Task(Runnable& in_runnable);
 			/// waits for its thread to finish
 			~Task();
 	}; //}}}
@@ -157,22 +72,22 @@ namespace msg
 	class SubsBase //{{{1
 	{
 		Channel* m_pChannel;
-		TaskImpl& m_taskImpl;
+		TaskImpl* m_taskImpl;
+		friend void waitFor(SubsBase&);
 		protected:
-			void subscribe();
-			void subscribe(Channel* in_parent, const char* in_name);
-			void subscribe(Channel* in_pChannel);
+//			void subscribe();
 			void unsubscribe();
 		public:
 			SubsBase();
-			Channel* getChannel() { return m_pChannel; }
+			void subscribe(Channel* in_parent, const char* in_name);
+			void subscribe(Channel* in_pChannel);
 			virtual ~SubsBase() { }
 			virtual void* create() const = 0;
 			virtual void destroy(void* in_data) const = 0;
 			virtual void checkType(SubsBase*) const = 0;
 			virtual void execute(void*) = 0;
 			void publish() const;
-			operator Channel* () { return m_pChannel; }
+			operator Channel* ();
 			void postItem(void* data);
 	};//}}}1
 
@@ -181,13 +96,13 @@ namespace msg
 		void destroyItemsFor(SubsBase* in_subs);
 	}
 
-	template <class T> class SubsImpl : public SubsBase
+	template <class T> class SubsImpl : public SubsBase //{{{1
 	{
 		private:
 			SubsImpl(const SubsImpl&) {}
 		public:
 			T value;
-			SubsImpl() { subscribe(); }
+			SubsImpl() { /* !!! do not subscribe by default !!! */ }
 			SubsImpl(Channel* in_parent, const char* in_name) { subscribe(in_parent, in_name); }
 			SubsImpl(Channel* in_pChannel) { subscribe(in_pChannel); }
 			virtual ~SubsImpl() { unsubscribe(); detail::destroyItemsFor(this); }
@@ -200,15 +115,16 @@ namespace msg
 			}
 	};
 
-	template <class T, class C = UnusedTag> 
-		class Subs : public SubsImpl<T>
+	class UnusedTag {}; 
+
+	template <class T, class C = UnusedTag> class Subs : public SubsImpl<T> //{{{1
 	{
 		public:
 			typedef void (C::*callback)();
 			C* m_obj;
 			const callback m_c;
 		public:
-			Subs(C* in_obj, callback in_c) : m_obj(in_obj), m_c(in_c) { }
+			Subs(C* in_obj, callback in_c) : m_obj(in_obj), m_c(in_c) { /* not subscribed */ }
 			Subs(Channel* in_parent, const char* in_name, C* in_obj, callback in_c) 
 				: SubsImpl<T>(in_parent, in_name), m_obj(in_obj), m_c(in_c)
 			{ 
@@ -224,14 +140,22 @@ namespace msg
 			}
 	};
 	
-	template <class T> class Subs<T, UnusedTag>	: public SubsImpl<T>
+	template <class T> class Subs<T, UnusedTag>	: public SubsImpl<T> //{{{1
 	{
 		public:
-			Subs() { }
+			Subs() { /* not subscribed */ }
 			Subs(Channel* in_parent, const char* in_name) : SubsImpl<T>(in_parent, in_name){ }
 			Subs(Channel* in_pChannel) : SubsImpl<T>(in_pChannel) { }
 			virtual void execute(void * in_data) { value = *(T*)in_data; }
 	};
+	
+	class Dir : public SubsImpl<UnusedTag> //{{{1
+	{
+		public:
+			Dir() { subscribe(0); }
+			virtual void execute(void *) {}
+	};
+	//}}}
 
 	SubsBase* processSubs();
 	void waitFor(SubsBase& in_subs);

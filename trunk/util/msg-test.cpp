@@ -22,7 +22,7 @@ namespace
 
 	AUTOTEST(sendReceiveSingle) //{{{1
 	{
-		Subs<bool> root;
+		Subs<bool> root(0);
 		Subs<int> sender(root, "number");
 		Subs<int> receiver(root, "number");
 		Subs<int> nonReceiver(root, "aaa");
@@ -43,80 +43,81 @@ namespace
 	{
 		//Task t(Factory(&goDist, 1));
 		// wait(q);
-		Task a(new Factory<TestRun, int>(1));
-		Task b(factory<TestRun>(2));
+		Task a(new TestRun(1));
 	}
 
 	class A : public Runnable //{{{1
 	{
 		public:
-			Subs<bool> m_quit;
+			Channel* m_quit;
 			A(Channel* in_pChannel) : m_quit(in_pChannel) {}
-			static FactoryBase* fac(Channel* in_pChannel) { return factory<A>(in_pChannel); }
 			virtual void main() 
-			{ 
-				m_quit.value = true; 
-				m_quit.publish(); 
+			{
+				Subs<bool> quit(m_quit);
+				quit.value = true; 
+				quit.publish(); 
 			}
 	};
 	
 	AUTOTEST(channel) //{{{1
 	{
-		Subs<bool> quit;
-		Task a(A::fac(quit));
+		Subs<bool> quit(0);
+		Task a(new A(quit));
 	}
 
 	class B : public Runnable //{{{1
 	{
-		Subs<bool> m_a, m_b;
+		Channel* m_a;
+		Channel* m_b;
 		public:
 			B(Channel* in_a, Channel* in_b) : m_a(in_a), m_b(in_b) {}
 			virtual void main()
 			{
-				m_b.publish();
+				Subs<bool> a(m_a), b(m_b);
+				b.publish();
 			}
-		//static FactoryBase* fac(Channel* in_a, Channel* in_b) { return new Factory<B,Channel*,Channel*>(in_a, in_b); }
-			static FactoryBase* fac(Channel* in_a, Channel* in_b) { return factory<B>(in_a, in_b); }
 	};
 
 	AUTOTEST(waitFor) //{{{1
 	{
-		Subs<bool> a;
-		Subs<bool> b;
-		Task aa(new Factory<B, Channel*, Channel*>(a, b));
-		Task bb(factory<B>(a.getChannel(), b.getChannel()));
-		Task cc(B::fac(a, b));
+		Subs<bool> a(0);
+		Subs<bool> b(0);
+		Task aa(new B(a, b));
 		waitFor(b);
 	}
 
 	struct CallbackTest : public Runnable //{{{1
 	{
+		Channel* m_channel;
 		Subs<bool, CallbackTest> m_a;
 		bool m_beenHere;
-		CallbackTest(Channel* in_channel) : m_a(in_channel, this, &CallbackTest::handle) 
+		CallbackTest(Channel* in_channel) : m_channel(in_channel), m_a(this, &CallbackTest::handle) 
 		{ 
 			m_a.value = false;
 		} 
 		virtual void main()
 		{
+			m_a.subscribe(m_channel);
 			m_a.publish();
 			m_beenHere = false;
+			//cout << "CallbackTest: waiting for m_a ..." << endl;
 			waitFor(m_a);
 			REQUIRE( m_beenHere == true );
 			REQUIRE( m_a.value == true );
 			m_a.publish();
 		}
-		static FactoryBase* fac(Channel* in_a) { return factory<CallbackTest>(in_a); }
 		void handle() { m_beenHere = true; }
 	};
 
 	AUTOTEST(callback) //{{{1
 	{
-		Subs<bool> a;
-		Task cc(CallbackTest::fac(a));
+		Subs<bool> a(0);
+		Task cc(new CallbackTest(a));
+		//cout << "callback: waiting for a ..." << endl;
 		waitFor(a);
 		a.value = true;
 		a.publish();
+		//cout << "callback: waiting for a again ..." << endl;
 		waitFor(a);
 	}
 	//}}}
