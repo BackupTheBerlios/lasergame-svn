@@ -6,6 +6,7 @@
 * $Id$
 */
 #include <iostream>
+#include <cmath>
 
 #include <ode/ode.h>
 
@@ -24,7 +25,7 @@ using namespace std;
 
 namespace {
 	num::Dist STARTZ() {return Milim(100);}
-	num::Dist ROBOT_LENGTH() {return Milim(300);}
+	num::Dist ROBOT_LENGTH() {return Milim(140);}
 	num::Dist ROBOT_WIDTH() {return Milim(200);}
 	num::Dist ROBOT_HEIGHT() {return Milim(100);}
 	num::Dist RADIUS() {return Milim(50);}
@@ -42,7 +43,7 @@ m_currentSpeed(m_pChannel,"speed-current"), m_poseChange(m_pChannel,"pose-change
 
 void FourWheeler::reqSpeed(num::Speed& in_speed) //{{{1
 {
-	cout << "Speed received... " << m_reqSpeed.value.m_forward.mm() << endl;
+	cout << "Speed received... " << m_reqSpeed.value.m_forward.mm() << "," << m_reqSpeed.value.m_angular.deg() << endl;
 }
 
 
@@ -70,15 +71,17 @@ void FourWheeler::create(World* in_world, Pose in_pose)
 		m_wheels[i].setQuaternion(q);
 		Geom* geom = new SphereGeom(&m_wheels[i], in_world, RADIUS().m());
 		geom->setMass(WMASS());
-		geom->m_contactData.mu = 20;
+    // Magic number (see Pisvejc): make it too big, and turning won't be possible, make it too small, and 
+		// robot will just stay on place, regardless of how fast wheels are turning
+		geom->m_contactData.mu = 0.75; 
 	}
-	m_wheels[0].setPosition(in_pose.x().m()+0.4*ROBOT_LENGTH().m()-0.5*RADIUS().m(), 
+	m_wheels[0].setPosition(in_pose.x().m()+0.4*ROBOT_LENGTH().m(), 
 	                      in_pose.y().m()+0.5*ROBOT_WIDTH().m(),STARTZ().m()-0.5*ROBOT_HEIGHT().m());
-	m_wheels[1].setPosition(in_pose.x().m()+0.4*ROBOT_LENGTH().m()-0.5*RADIUS().m(), 
+	m_wheels[1].setPosition(in_pose.x().m()+0.4*ROBOT_LENGTH().m(), 
 	                      in_pose.y().m()-0.5*ROBOT_WIDTH().m(),STARTZ().m()-0.5*ROBOT_HEIGHT().m());
-	m_wheels[2].setPosition(in_pose.x().m()-0.4*ROBOT_LENGTH().m()-0.5*RADIUS().m(), 
+	m_wheels[2].setPosition(in_pose.x().m()-0.4*ROBOT_LENGTH().m(), 
 	                      in_pose.y().m()+0.5*ROBOT_WIDTH().m(),STARTZ().m()-0.5*ROBOT_HEIGHT().m());
-	m_wheels[3].setPosition(in_pose.x().m()-0.4*ROBOT_LENGTH().m()-0.5*RADIUS().m(), 
+	m_wheels[3].setPosition(in_pose.x().m()-0.4*ROBOT_LENGTH().m(), 
 	                      in_pose.y().m()-0.5*ROBOT_WIDTH().m(),STARTZ().m()-0.5*ROBOT_HEIGHT().m());
 
 	for (int i=0; i<4;i++)
@@ -117,23 +120,43 @@ Pose calcPoseChange(const Speed & in_speed, const Time & in_dt) //{{{1
 
 void FourWheeler::update(const Time& in_timeChange)
 {
-	double pos[3]; 
+	double pos[3], quaternion[4]; 
 	m_pChassis->getPosition(pos);
+	m_pChassis->getQuaternion(quaternion);
 	std::cout << "Robot position: " << pos[0] << "," << pos[1] << "," << pos[2] << std::endl;
-
-	dReal speed = m_reqSpeed.value.m_forward.m()/RADIUS().m()*-1;
+	std::cout << "Current quaternion: " << quaternion[0] << "," << quaternion[1] << "," << quaternion[2] 
+		        <<"," << quaternion[3] << std::endl;
+	std::cout << "Current orientation: " << Rad(acos(quaternion[0]) * 2 * (quaternion[3] > 0 ? 1 : -1)).deg() << std::endl;
+	double speedR = ((m_reqSpeed.value.m_angular.rad() * ROBOT_WIDTH().m())/2 +  m_reqSpeed.value.m_forward.m());
+	double speedL = (2 * m_reqSpeed.value.m_forward.m() - speedR);
+	std::cout << "Setting speeds: R=" << speedR << " L=" << speedL << std::endl;
 	for (int i=0;i<4;i++)
-	{
-		m_joints[i]->setParam(dParamVel2,speed);
+	{ 
+		if (i % 2 == 0)
+		  m_joints[i]->setParam(dParamVel2,speedL/RADIUS().m()*-1);
+		else
+		  m_joints[i]->setParam(dParamVel2,speedR/RADIUS().m()*-1);
 		m_joints[i]->setParam(dParamFMax2,FMAX());
-		 cout << m_joints[i]->getAngle2Rate() << ",";
+
+		cout << m_joints[i]->getAngle2Rate() << ",";
 #if 0
 		dBodyEnable(m_joints[i].getBody(0));
 		dBodyEnable(m_joints[i].getBody(1));
 #endif
 	}
-	m_currentSpeed.value.m_forward = Meter(m_joints[0]->getAngle2Rate()*RADIUS().m() * -1);
-	cout << "Current speed is: " << m_currentSpeed.value.m_forward.mm() << endl;
+	cout << endl;
+	// Calculate odometric speed
+	double dL, dR;
+
+	// Use average distance travelled by both wheels on each side
+	dL = (m_joints[0]->getAngle2Rate()*RADIUS().m() * -1 + m_joints[2]->getAngle2Rate()*RADIUS().m() * -1)/2;
+	dR = (m_joints[1]->getAngle2Rate()*RADIUS().m() * -1 + m_joints[3]->getAngle2Rate()*RADIUS().m() * -1)/2;
+	
+	// Approximation of differential steering
+	m_currentSpeed.value.m_forward = Meter((dL+dR)/2);
+	m_currentSpeed.value.m_angular = Rad((dR-dL)/ROBOT_WIDTH().m());
+	cout << "Current speed is: forward = " << m_currentSpeed.value.m_forward.mm() << ", angular = " <<
+		   m_currentSpeed.value.m_angular.deg() << endl;
 	m_currentSpeed.publish();
 
 	m_poseChange.value = calcPoseChange(m_currentSpeed.value,in_timeChange);

@@ -93,7 +93,69 @@ AUTOTEST(testMove) //{{{1
 	//REQUIRE( i == 241 );
 }
 
+AUTOTEST(testTurn) //{{{1
+{
+	Subs<int> dir(0);
+	Subs<Time> dt(dir, "time-change");
+	Subs<int> watchdog(dir, "watchdog");
+	Subs<Pose> dp(dir, "pose-change");
+	Subs<Speed> req(dir, "speed-requested");
+	Subs<Speed> cur(dir, "speed-current");
+	
+	OdeSimul* simul = new OdeSimul(dir);
+	OdeRobot* bot = new FourWheeler(dir);
+	simul->addRobot(bot);
+	Task e(simul);
+	waitFor(dt);
+	int i = 0;
+	
+	Time t = Sec(1);
+	Angle ang = Deg(45);
+	req.value.m_forward = Milim(0);
+	req.value.m_angular = Deg(180);
+	req.publish();
+	while( t.gt() && ang.gt() )
+	{
+		t -= dt.value;
+		ang -= dp.value.heading();
+		i++;
+		watchdog.publish();
+		waitFor(dt);
+		cout << t.ms() << ": " << ang.deg() << endl;
+	}
+	REQUIRE( !ang.gt() );
 
+	t = MSec(600);
+	req.value.m_forward = Milim(0);
+	req.value.m_angular = Deg(0);
+	req.publish();
+	while( t.gt() && (cur.value.m_forward.gt() || cur.value.m_angular.gt()))
+	{
+		t -= dt.value;
+		i++;
+		//cout << t.ms() << ": " << currentSpeed.m_v.mm() << endl;
+		watchdog.publish();
+		waitFor(dt);
+	}
+	REQUIRE( !cur.value.m_forward.gt() );
+	REQUIRE( !cur.value.m_angular.gt() );
+
+	req.value.m_forward = Milim(1000);
+	req.value.m_angular = Deg(-90);
+	req.publish();
+	ang = Deg(45);
+	t = Sec(1);
+	while( t.gt() && ang.gt() )
+	{
+		t -= dt.value;
+		ang += dp.value.heading();
+		i++;
+		watchdog.publish();
+		waitFor(dt);
+		cout << t.ms() << ": " << ang.deg() << endl;
+	}
+	//REQUIRE( i == 241 );
+}
 
 
 }
