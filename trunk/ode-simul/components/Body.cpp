@@ -51,6 +51,24 @@ void Body::getPosition(double out_vector[3])
 	out_vector[2] = a[2];
 }
 
+void Body::getAngularVelocity(double out_vector[3])
+{
+	const dReal* a = dBodyGetAngularVel(m_id);
+	out_vector[0] = a[0];
+	out_vector[1] = a[1];
+	out_vector[2] = a[2];
+}
+
+void Body::getQuaternion(double out_vector[4])
+{
+	const dReal* q = dBodyGetQuaternion(m_id);
+	out_vector[0] = q[0];
+	out_vector[1] = q[1];
+	out_vector[2] = q[2];
+	out_vector[3] = q[3];
+
+}
+
 void Body::setQuaternion(dQuaternion in_q)
 {
 	dBodySetQuaternion(m_id, in_q);
