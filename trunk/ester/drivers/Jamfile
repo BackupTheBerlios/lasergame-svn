@@ -1,0 +1,2 @@
+lib drivers : drivers.cpp : <link>static : <use>/util//msg <use>/util//thread ;
+

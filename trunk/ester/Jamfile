@@ -5,7 +5,7 @@
 #obj MCL : MCL.cpp : <link>static ;
 #libs = /util//thread /util//lock /util//semaphore /number//number Action ;
 
-libs = /util//thread /util//msg ;
+libs = /util//thread /util//msg /util//conf ;
 #lib controller : EsterSimul Move EsterUSB MCL /cam//cam /mcl//mcl $(libs) : <link>static ;
 
 unit-test measures-test : measures-test.cpp ;
@@ -19,4 +19,8 @@ unit-test simul-test : simul-test.cpp simul.cpp field.cpp $(libs) ;
 #exe esterusbmain : EsterUSBMain.cpp controller ;
 
 #alias test : action-test ester-simul-test move-test ball-scan-test mcl-test ;
+
+#build-project drivers ;
+
+unit-test manager-test : manager-test.cpp manager.cpp field.cpp drivers//drivers $(libs) ;
 
