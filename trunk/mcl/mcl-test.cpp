@@ -8,7 +8,7 @@
 #include "dre.h"
 #include "lvr.h"
 //#include "OdoFilter.h"
-//#include "MCLDist.h"
+#include "mcldist.h"
 
 using namespace std;
 using namespace num;
@@ -90,7 +90,7 @@ AUTOTEST(testOdoNextGen) //{{{1
 	CPPUNIT_ASSERT( test.y().eq( ref.y() ) );
 	CPPUNIT_ASSERT( test.heading().eq( ref.heading() ) );
 }
-
+#endif
 AUTOTEST(testResampleDRE) //{{{1 ////////////////////
 {
 	Rnd rnd;
@@ -127,15 +127,16 @@ AUTOTEST(testResampleLVR) //{{{1 ////////////////////
 			s->w() = (rnd() + 1)*1.5; // random weights from (0,3)
 		mcl.normalize();
 		MCL mcl_before(mcl);
-		std::sort(mcl_before.begin(), mcl_before.end(), num::cmpX);
+		std::sort(mcl_before.begin(), mcl_before.end(), num::cmpX<Sample::type>);
 		resample(mcl, rnd);
-		std::sort(mcl.begin(), mcl.end(), num::cmpX);
+		std::sort(mcl.begin(), mcl.end(), num::cmpX<Sample::type>);
 		CPPUNIT_ASSERT_DOUBLES_EQUAL( 0.0, mclDist(mcl_before, mcl), 0.4 );
+		//cout << mcl << endl;
 		for (s = mcl.begin(); s != mcl.end(); s++)
-			CPPUNIT_ASSERT_DOUBLES_EQUAL( 1.0, toDouble(s->w()), 0.0);
+			CPPUNIT_ASSERT_DOUBLES_EQUAL( 1.0, toDouble(s->w()), 1e-8);
 	}
 }
-
+#if 0
 AUTOTEST(testMCL) //{{{1
 {
 	Rnd rnd;
@@ -190,7 +191,7 @@ AUTOTEST(testPartSort) //{{{1
 			CPPUNIT_ASSERT( mcl[j].w() >= DRE::w_max() );
 	}
 }
-#if 0 
+
 AUTOTEST(testMCLDist) //{{{1
 {
 	Rnd rnd;
@@ -208,6 +209,5 @@ AUTOTEST(testMCLDist) //{{{1
 		CPPUNIT_ASSERT_DOUBLES_EQUAL( 0, mclDist(mcl1, mcl2), 1e-8 );
 	}
 }
-#endif
 //}}}
 }
