@@ -1,6 +1,6 @@
 #include "util/unit-test.h"
 #include <iostream>
-#include "Rnd.h"
+#include "rnd.h"
 #include "util/util.h" // ARRAY_SIZE
 using namespace std;
 using namespace num;
