@@ -93,13 +93,17 @@ namespace
 	{
 		Subs<bool, CallbackTest> m_a;
 		bool m_beenHere;
-		CallbackTest(Channel* in_channel) : m_a(in_channel, this, &CallbackTest::handle) {} 
+		CallbackTest(Channel* in_channel) : m_a(in_channel, this, &CallbackTest::handle) 
+		{ 
+			m_a.value = false;
+		} 
 		virtual void main()
 		{
 			m_a.publish();
 			m_beenHere = false;
 			waitFor(m_a);
 			REQUIRE( m_beenHere == true );
+			REQUIRE( m_a.value == true );
 			m_a.publish();
 		}
 		static FactoryBase* fac(Channel* in_a) { return factory<CallbackTest>(in_a); }
@@ -111,6 +115,7 @@ namespace
 		Subs<bool> a;
 		Task cc(CallbackTest::fac(a));
 		waitFor(a);
+		a.value = true;
 		a.publish();
 		waitFor(a);
 	}

@@ -4,13 +4,15 @@ project
 	: requirements 
 		<include>.
 		<variant>debug:<define>_DEBUG
-		<toolset>msvc:<cxxflags>/W3
+		#<toolset>msvc:<cxxflags>/W3
 		<toolset>msvc:<include>util/win
 		<threading>multi
 	: build-dir _build 
 	;
 
-build-project util ;
-build-project number ;
-build-project mcl ;
+subprojects = util number mcl ester ;
+for s in $(subprojects)
+{
+	build-project $(s) ;
+}
 

@@ -55,7 +55,13 @@ namespace msg
 	
 	class Runnable { public: virtual void main() = 0; virtual ~Runnable() {} };
 	
-	class FactoryBase { public: TaskImpl* m_taskImpl; virtual Runnable* create() = 0; };
+	class FactoryBase 
+	{ 
+		public: 
+			TaskImpl* m_taskImpl; 
+			virtual Runnable* create() = 0; 
+			virtual ~FactoryBase() {} 
+	};
 
 	// class factories templates {{{1
 	struct UnusedTag { void func() {} };
@@ -75,7 +81,7 @@ namespace msg
 		P1 m_1; P2 m_2; P3 m_3;
 		public:
 			Factory(const P1 in_1, const P2 in_2, const P3 in_3) : m_1(in_1), m_2(in_2), m_3(in_3) {}
-			virtual Runnable* create() { return new What(m_1, m_2); }
+			virtual Runnable* create() { return new What(m_1, m_2, m_3); }
 	};
 
 	template <class What, class P1, class P2> //{{{2
