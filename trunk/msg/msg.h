@@ -10,23 +10,46 @@
  * $Id$
  */
 
+#include "util/thread.h"
+
 namespace msg
 {
-	class TaskBase
-	{
-		public:  class Impl;
-		protected: Impl* m_pimpl;
-
-		public:
-			// Creates Impl (thread-specific things = lock, item queue)
-			TaskBase();
-			// Destroys Impl
-			virtual ~TaskBase();
-	};
+	/// Class for a computational context (can accept messages)
+	class TaskImpl;
 	
-	class Task : public TaskBase
+	class Runnable { public: virtual void main() = 0; };
+	
+	class HelperBase { public: virtual Runnable* create() = 0; };
+
+	template <class What, class Par1> class Helper : public HelperBase
 	{
-		
+		Par1 m_par1;
+		public:
+			Helper(const Par1& in_par1) : m_par1(in_par1) {}
+			virtual Runnable* create() { return new What(m_par1); }
+	};
+
+	template <class What, class Par1> HelperBase* helper(const Par1& in_par1)
+	{
+		return new Helper<What, Par1>(in_par1);
+	}
+
+#ifndef JOIN
+#	define JOIN( X, Y ) DO_JOIN( X, Y )
+#	define DO_JOIN( X, Y ) DO_JOIN2(X,Y)
+#	define DO_JOIN2( X, Y ) X##Y
+#endif
+
+#	define TASK(a,b) Task JOIN(unique,__LINE__)(helper<a>(b))
+
+	class Task
+	{
+		thread::id_t m_id;
+		public:
+			/// creates thread
+			Task(HelperBase* in_helper);
+			/// waits for its thread to finish
+			~Task();
 	};
 
 	class SubsBase;
@@ -40,7 +63,7 @@ namespace msg
 	class SubsBase
 	{
 		SubsList& m_subList;
-		TaskBase::Impl& m_taskImpl;
+		TaskImpl& m_taskImpl;
 		public:
 			SubsBase(const char* in_name);
 			virtual ~SubsBase();

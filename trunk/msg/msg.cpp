@@ -44,43 +44,34 @@ namespace msg
 			void assign() { m_user->assignTo(m_subs); destroy(); }
 	};
 
-	class TaskBase::Impl : public std::list<TaskItem>, public thread::Lock, public thread::CondVar
+	struct TaskImplKey : public thread::Key //{{{1
 	{
-		public:
-			void wait() { thread::CondVar::wait(*this); }	
-			void push_back_locked(SubsBase* in_subs, WrappedBase* in_item)
-			{
-				lock(); push_back(TaskItem(in_subs, in_item)); broadcast(); unlock();
-			}
-	};
-
-	TaskBase::TaskBase()
-	{
-		m_pimpl = new Impl();
-	}
-
-	TaskBase::~TaskBase()
-	{
-		delete m_pimpl;
-	}
-
-	struct TaskBaseImplKey : public thread::Key //{{{1
-	{
-		TaskBase::Impl* operator () () { return (TaskBase::Impl*)getVoid(); }
+		TaskImpl* operator () () { return (TaskImpl*)getVoid(); }
 		using thread::Key::operator = ;
 	}	s_impl;
 
+	class TaskImpl : public std::list<TaskItem>, public thread::Lock, public thread::CondVar //{{{1
+	{
+		public:
+			thread::id_t m_id;
+			TaskImpl() { s_impl = this; }
+			void wait() { thread::CondVar::wait(*this); }	
+			void push_back_locked(SubsBase* in_subs, WrappedBase* in_item)
+			{
+				lock(); 
+				push_back(TaskItem(in_subs, in_item)); 
+				broadcast(); 
+				unlock();
+			}
+	};
+	//}}}
 }
 
 namespace 
 {
 	using namespace msg;
 
-	class Main : public TaskBase //{{{1
-	{
-		public:
-			Main() { s_impl = this->m_pimpl; }
-	} s_main;
+	TaskImpl s_main;
 	
 	class AllSubs : public thread::Lock, public std::map< std::string, SubsList > //{{{1
 	{ } s_allSubs;
@@ -94,7 +85,7 @@ namespace
 	TaskItem getItem() //{{{1
 	{
 		// 1. find current thread and associated queue
-		TaskBase::Impl* t = s_impl();
+		TaskImpl* t = s_impl();
 		// 2. lock it
 		thread::Locker lock(*t);
 		// 3. pop and return the item
@@ -109,11 +100,11 @@ namespace
 	void destroyItemsFor(SubsBase* in_subs) //{{{1
 	{
 		// 1. find current thread and associated queue
-		TaskBase::Impl* t = s_impl();
+		TaskImpl* t = s_impl();
 		// 2. lock it
 		thread::Locker lock(*t);
 		// 3. loop through all and erase & delete items for in_subs (use TaskItemBase::isFor(SubsBase))
-		for (TaskBase::Impl::iterator i = t->begin(); i != t->end(); ++i)
+		for (TaskImpl::iterator i = t->begin(); i != t->end(); ++i)
 		{
 			if (i->isFor(in_subs))
 			{
@@ -122,6 +113,20 @@ namespace
 			}
 		}
 		// [4. auto-unlock]
+	}
+	ulong threadFn(void* in_helper) //{{{1
+	{
+		// create support structures for messages
+		TaskImpl m;
+		// create the user object
+		Runnable* dummy = ((HelperBase*)(in_helper))->create();
+		// delete in_helper since it is no longer needed
+		delete ((HelperBase*)(in_helper));
+		// call user supplied main
+		try { dummy->main(); } catch(...) {}
+		// delete the user object
+		delete dummy;
+		return 0;
 	}
 	//}}}
 }
@@ -165,5 +170,17 @@ void wait() //{{{1
 }
 //}}}
 
+
+Task::Task(HelperBase* in_helper) //{{{1
+{
+	m_id = thread::create(threadFn, in_helper);
+}
+
+Task::~Task() //{{{1
+{
+	// TODO: tell the thread to stop
+	thread::join(m_id);
+}
+//}}}
 } // namespace msg
 
