@@ -32,8 +32,8 @@ class Simul : public msg::Runnable
 		virtual void main();
 
 	private:
-		void reqSpeed();
-		void reqShoot();
+		void reqSpeed(num::Speed&);
+		void reqShoot(num::Dist&);
 
 #if 0
 	void upBalls();

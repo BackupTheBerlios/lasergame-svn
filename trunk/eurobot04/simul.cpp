@@ -242,12 +242,12 @@ void Simul::main() //{{{1
 	}
 }
 
-void Simul::reqSpeed() //{{{1
+void Simul::reqSpeed(num::Speed& in_speed) //{{{1
 {
 	//cout << "Speed received... " << m_reqSpeed.value.m_forward.mm() << endl;
 }
 
-void Simul::reqShoot() //{{{1
+void Simul::reqShoot(num::Dist& in_dist) //{{{1
 {
 #if 0
 	// TODO !!!

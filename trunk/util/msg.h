@@ -120,7 +120,7 @@ namespace msg
 	template <class T, class C = UnusedTag> class Subs : public SubsImpl<T> //{{{1
 	{
 		public:
-			typedef void (C::*callback)();
+			typedef void (C::*callback)(T&);
 			C* m_obj;
 			const callback m_c;
 		public:
@@ -136,7 +136,7 @@ namespace msg
 			virtual void execute(void * in_data) 
 			{ 
 				value = *(T*)in_data; 
-				(m_obj->*m_c)();
+				(m_obj->*m_c)(value);
 			}
 	};
 	
