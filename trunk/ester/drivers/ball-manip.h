@@ -3,6 +3,7 @@
 
 #include "drivers.h"
 #include "util/thread.h"
+#include "../field.h"
 
 namespace drivers {
 

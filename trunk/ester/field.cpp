@@ -38,9 +38,23 @@ Field::Field(int in_flags) : m_score(0), m_verbose(false) //{{{1
 	if (in_flags & RAND_PALM) randPalm(0); else setPalm(2,2);
 	if (in_flags & RAND_BALL)	setBall(0); else setBall(2,6,11);
 	if (in_flags & VERBOSE) m_verbose = true;
+	m_robot[0] = measures::INITIAL();
+	m_robot[1] = measures::INITIAL();
 }
 
 Field::~Field() {} //{{{1
+
+void Field::setRobot(const int in_id, const num::Pose& in_pose)
+{
+	ASSERT( in_id == 0 || in_id == 1 );
+	m_robot[in_id] = in_pose;
+}
+
+const num::Pose& Field::getRobot(const int in_id) 
+{ 
+	ASSERT( in_id == 0 || in_id == 1 );
+	return m_robot[in_id]; 
+}
 
 void Field::setPalm(int in_crossingX, int in_crossingY) //{{{1
 {
@@ -190,12 +204,15 @@ void Field::checkPalms(const Point & in_p) //{{{1
 
 void Field::checkEnemy(const Point & in_p) //{{{1
 {
+#if 0 // TODO
 	if (in_p.distanceTo(m_enemy) < m_minEnemyDist)
   {
 	  m_minEnemyDist = in_p.distanceTo(m_enemy);
 	  m_minEnemyPose = in_p;
 	  //m_minEnemyTime = m_timeChange.m_time;
   }
+Pose(SIZE_X(), SIZE_Y(), Deg(180)).offsetBy(in_point).point();
+#endif
 }
 
 int Field::tryEatBall(const Pose & in_pose, const Dist & BALL_EAT_DIST) //{{{1

@@ -234,7 +234,7 @@ void Simul::main() //{{{1
 			ballPos.publish();
 		}
 		
-		enemy.value = pose.value.offsetTo(m_field.enemy());
+		enemy.value = pose.value.offsetTo(m_field.getRobot(!m_side).point());
 		enemy.publish();
 
 		m_field.checkPalms(pose.value.point());

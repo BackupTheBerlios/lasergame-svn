@@ -10,6 +10,7 @@
 #include "gp2top.h"
 #include "ball-manip.h"
 #include "ball-detect.h"
+#include "enemy-detect.h"
 #include "util/assert.h"
 
 #include <map>
@@ -44,6 +45,7 @@ namespace drivers {
 				r<FloorColor>("floor-color");
 				r<BallManip>("ball-manip");
 				r<BallDetect>("ball-detect");
+				r<EnemyDetect>("enemy-detect");
 			}
 	} s_reg;
 	

@@ -281,27 +281,22 @@ AUTOTEST(testCamera) //{{{1
 	REQUIRE( ballOffset.value.x().eq(Milim(560), Milim(20)) );
 	REQUIRE( ballOffset.value.y().eq(Dist(), Milim(20)) );
 }
-//}}}
 
-#if 0
 AUTOTEST(testEnemy) //{{{1
 {
-	Subs<int> dir(0);
-	Subs<Time> dt(dir, "time-change");
-	Subs<int> watchdog(dir, "watchdog");
-	Subs<Point> enemy(dir, "enemy");
-	
+	Dir dirA; Dir dirB; 
+	Subs<bool> watchdog(dirA, "watchdog");
+	Subs<Point> enemy(dirA, "enemy-offset");
+
+	conf::Robot a("watchdog, ester-speed, pose-change, pose, enemy-detect");
+	conf::Robot b;
 	Field field;
-	Task e(new Simul(dir, &field, 0));
-	waitFor(dt);         // wait until simulator is ready
-	watchdog.publish();  // make step
-	waitFor(enemy);      // wait for the message to come in
-	
+	Task e(new Manager(field, a, b, dirA, dirB));
+
+	waitFor(enemy);
+
 	// TODO who to test this further?
 }
-
-
 //}}}
-#endif
 } // namespace
 

@@ -13,7 +13,7 @@ class Balls : public std::list<num::Point> {};
 class Field : public thread::Lock
 {
 	private:
-		num::Point m_enemy;
+		num::Pose m_robot[2];
 		int m_score;
 		num::Point m_palm1;
 		num::Point m_palm2;
@@ -42,7 +42,8 @@ class Field : public thread::Lock
 		void randPalm(uint32_t in_seed = 0);
 		void setBall(uint32_t in_seed = 0);
 		void setBall(int in_pos1, int in_pos2, int in_pos3);
-		void setEnemy(const num::Point& m_place);
+		void setRobot(const int in_id, const num::Pose& in_pose);
+		const num::Pose& getRobot(const int in_id);
 
 		void checkPalms(const num::Point & in_p);
 		void checkEnemy(const num::Point & in_p);
@@ -53,8 +54,6 @@ class Field : public thread::Lock
 		int tryEatBall(const num::Pose & in_pose, const num::Dist & BALL_EAT_DIST);
 		void shootBall(const num::Pose & in_pose);
 		
-		const num::Point & enemy() { return m_enemy; }
-
 		Balls m_balls;
 };
 

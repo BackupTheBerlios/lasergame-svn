@@ -1,9 +1,14 @@
+// $Id$
+// Copyright (C) 2004, Zbynek Winkler
+
+///@file
 #ifndef DRIVER_H_INCLUDED
 #define DRIVER_H_INCLUDED 1
 
 #include "util/msg.h"
 #include "util/util.h"
-#include "../field.h"
+
+class Field;
 
 namespace drivers {
 
@@ -15,11 +20,12 @@ namespace drivers {
 				public:
 					msg::Channel* p;
 					const int     myID;
+					const int     robotID;
 					msg::Channel* done;
 					Field&        field;
 
-					Params(msg::Channel* in_p, int in_id, msg::Channel* in_done, Field& in_field) 
-						: p(in_p), myID(in_id), done(in_done), field(in_field) {}
+					Params(msg::Channel* in_p, int in_id, int in_robotID, msg::Channel* in_done, Field& in_field) 
+						: p(in_p), myID(in_id), robotID(in_robotID), done(in_done), field(in_field) {}
 			};
 
 		protected:
