@@ -7,7 +7,7 @@
 #include "mcl.h"
 #include "dre.h"
 #include "lvr.h"
-//#include "OdoFilter.h"
+#include "odofilter.h"
 #include "mcldist.h"
 
 using namespace std;
@@ -43,7 +43,7 @@ AUTOTEST(testMainLoop) //{{{1
 	}
 
 }
-#if 0
+
 AUTOTEST(testOdoBasic) //{{{1
 {
 	OdoBasic odo(Milim(195));
@@ -90,7 +90,7 @@ AUTOTEST(testOdoNextGen) //{{{1
 	CPPUNIT_ASSERT( test.y().eq( ref.y() ) );
 	CPPUNIT_ASSERT( test.heading().eq( ref.heading() ) );
 }
-#endif
+
 AUTOTEST(testResampleDRE) //{{{1 ////////////////////
 {
 	Rnd rnd;
@@ -136,7 +136,7 @@ AUTOTEST(testResampleLVR) //{{{1 ////////////////////
 			CPPUNIT_ASSERT_DOUBLES_EQUAL( 1.0, toDouble(s->w()), 1e-8);
 	}
 }
-#if 0
+
 AUTOTEST(testMCL) //{{{1
 {
 	Rnd rnd;
@@ -164,7 +164,7 @@ AUTOTEST(testMCL) //{{{1
 		CPPUNIT_ASSERT( test.eq(localize.getResult(), Pose(Milim(2), Milim(2), Deg(1))) );
 	}
 }
-#endif
+
 AUTOTEST(testPartSort) //{{{1
 {
 	//void partSort(int& b_begin, int& b_end);
