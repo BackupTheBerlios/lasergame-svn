@@ -99,14 +99,16 @@ class AngularAcc //{{{1
 class Speed //{{{1
 {
 	public:
-		LinearSpeed m_linear;
+		LinearSpeed m_forward;
+		LinearSpeed m_side;
 		AngularSpeed m_angular;
 };
 
 class Acc //{{{1
 {
 	public:
-		LinearAcc m_linear;
+		LinearAcc m_forward;
+		LinearAcc m_side;
 		AngularAcc m_angular;
 };
 //}}}

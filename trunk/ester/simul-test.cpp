@@ -44,25 +44,25 @@ AUTOTEST(testLinearSpeed) //{{{1
 
 	// accelerate
 	Time t = MSec(500);
-	req.value.m_linear = Milim(300);
-	//cout << req.value.m_linear.mm() << endl; 
+	req.value.m_forward = Milim(300);
+	//cout << req.value.m_forward.mm() << endl; 
 	req.publish();
-	while( t.gt() && cur.value.m_linear.lt(LinearSpeed(Milim(250))) )
+	while( t.gt() && cur.value.m_forward.lt(LinearSpeed(Milim(250))) )
 	{
 		t -= dt.value;
 		i++;
-		//cout << t.ms() << ": " << cur.value.m_linear.mm() << endl;
+		//cout << t.ms() << ": " << cur.value.m_forward.mm() << endl;
 		watchdog.publish();
 		waitFor(dt);
 	}
 	//cout << endl;
-	REQUIRE( !cur.value.m_linear.lt(LinearSpeed(Milim(250))) );
+	REQUIRE( !cur.value.m_forward.lt(LinearSpeed(Milim(250))) );
 
 	// decelerate
 	t = MSec(600);
-	req.value.m_linear = Milim(0);
+	req.value.m_forward = Milim(0);
 	req.publish();
-	while( t.gt() && cur.value.m_linear.gt() )
+	while( t.gt() && cur.value.m_forward.gt() )
 	{
 		t -= dt.value;
 		i++;
@@ -70,7 +70,7 @@ AUTOTEST(testLinearSpeed) //{{{1
 		watchdog.publish();
 		waitFor(dt);
 	}
-	REQUIRE( !cur.value.m_linear.gt() );
+	REQUIRE( !cur.value.m_forward.gt() );
 	REQUIRE( i == 132); // 136
 }
 
@@ -89,7 +89,7 @@ AUTOTEST(testMove) //{{{1
 	
 	Time t = Sec(2);
 	Meter d(1);
-	req.value.m_linear = Milim(1070);
+	req.value.m_forward = Milim(1070);
 	req.publish();
 	while( t.gt() && d.gt() )
 	{
@@ -162,7 +162,7 @@ AUTOTEST(testTruePose) //{{{1
 	waitFor(dt);         // wait until simulator is ready
 	
 	Time t = Sec(1);
-	req.value.m_linear = Meter(1);
+	req.value.m_forward = Meter(1);
 	req.publish();
 	while( t.gt() )
 	{
@@ -191,7 +191,7 @@ AUTOTEST(testGP2) //{{{1
 	double max = 0;
 	Dist x;
 	Time t = Sec(3);
-	req.value.m_linear = Meter(1);
+	req.value.m_forward = Meter(1);
 	req.publish();
 	while( t.gt() )
 	{

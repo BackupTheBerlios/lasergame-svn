@@ -32,38 +32,38 @@ static void updateSpeed(num::Speed & in_old, const num::Speed & in_req, const nu
 	int accel = 0;
 	int brake = 0;
 	
-	if (in_old.m_linear >= LinearSpeed() && in_req.m_linear.gt(in_old.m_linear))
+	if (in_old.m_forward >= LinearSpeed() && in_req.m_forward.gt(in_old.m_forward))
 		accel = 1;
-	else if (in_old.m_linear <= LinearSpeed() && in_req.m_linear.lt(in_old.m_linear))
+	else if (in_old.m_forward <= LinearSpeed() && in_req.m_forward.lt(in_old.m_forward))
 		accel = -1;
 
-	if (in_old.m_linear > LinearSpeed() && in_req.m_linear.lt(in_old.m_linear))
+	if (in_old.m_forward > LinearSpeed() && in_req.m_forward.lt(in_old.m_forward))
 		brake = 1;
-	else if (in_old.m_linear < LinearSpeed() && in_req.m_linear.gt(in_old.m_linear))
+	else if (in_old.m_forward < LinearSpeed() && in_req.m_forward.gt(in_old.m_forward))
 		brake = -1;
 	
 	ASSERT( !(brake != 0 && accel != 0) );
 
-	//cout << accel << "\t" << brake << "\t" << in_req.m_linear.mm() << "\t" 
-	//	<< in_old.m_linear.mm() << endl;;
+	//cout << accel << "\t" << brake << "\t" << in_req.m_forward.mm() << "\t" 
+	//	<< in_old.m_forward.mm() << endl;;
 
 	if (accel != 0) // speed up (forward or backward)
-		in_old.m_linear += (ACCEL() * in_dt) * accel;
+		in_old.m_forward += (ACCEL() * in_dt) * accel;
 	else if (brake != 0) // brake
 	{
-		if (in_old.m_linear * brake < LinearSpeed(Milim(60)))
+		if (in_old.m_forward * brake < LinearSpeed(Milim(60)))
 		{
-			in_old.m_linear -= LinearSpeed(Milim(2)) * brake;
-			if (in_req.m_linear == LinearSpeed() && in_old.m_linear * brake < LinearSpeed(Milim(5)))
+			in_old.m_forward -= LinearSpeed(Milim(2)) * brake;
+			if (in_req.m_forward == LinearSpeed() && in_old.m_forward * brake < LinearSpeed(Milim(5)))
 			{
-				//cout << ">>>>>>>>\t" << brake << "\t" << in_old.m_linear.mm() << endl;
-				in_old.m_linear = LinearSpeed();
+				//cout << ">>>>>>>>\t" << brake << "\t" << in_old.m_forward.mm() << endl;
+				in_old.m_forward = LinearSpeed();
 			}
 		}
 		else
 		{
 			ASSERT( in_dt == MSec(5) );
-			in_old.m_linear /= 1.0184; // exp(dt*b)==exp(0.005*3.7)==1.018672... 
+			in_old.m_forward /= 1.0184; // exp(dt*b)==exp(0.005*3.7)==1.018672... 
 		}
 	}
 
@@ -75,7 +75,7 @@ static void updateSpeed(num::Speed & in_old, const num::Speed & in_req, const nu
 
 Pose calcPoseChange(const Speed & in_speed, const Time & in_dt) //{{{1
 {
-	return Pose(in_speed.m_linear * in_dt, Dist(), in_speed.m_angular * in_dt);
+	return Pose(in_speed.m_forward * in_dt, Dist(), in_speed.m_angular * in_dt);
 }
 
 void updatePose(Pose & in_p, const Pose & in_dp, const Angle::type& AERR, const Dist::type& FERR, const Angle::type& DERR, Rnd & in_rnd) //{{{1
@@ -235,7 +235,7 @@ void Simul::main() //{{{1
 
 void Simul::reqSpeed() //{{{1
 {
-	//cout << "Speed received... " << m_reqSpeed.value.m_linear.mm() << endl;
+	//cout << "Speed received... " << m_reqSpeed.value.m_forward.mm() << endl;
 }
 
 void Simul::reqShoot() //{{{1
