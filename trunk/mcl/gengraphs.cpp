@@ -2,21 +2,21 @@
 #include <iomanip>
 #include <fstream>
 #include <vector>
-#include "MCL.h"
-#include "DRE.h"
-#include "LVR.h"
-#include "MCLDist.h"
+#include "mcl.h"
+#include "dre.h"
+#include "lvr.h"
+#include "mcldist.h"
 
 using namespace std;
 using namespace mcl;
-using num::Number;
+typedef double Number;
 
 double mclDeviation(const MCL & a_mcl) //{{{1 ///////////////////////
 {
 	double dw = 0;
 	MCL::const_iterator s;
 	for (s = a_mcl.begin(); s != a_mcl.end(); s++)
-		dw += fabs(toDouble(s->w())-1);
+		dw += fabs(num::toDouble(s->w())-1);
 	return dw/double(a_mcl.end() - a_mcl.begin());
 }
 struct Line //{{{1 //////////////////////////////////////////////////
@@ -42,7 +42,7 @@ void generateGraphs() //{{{1 ////////////////////////////////////////
 {
 	int numavg = 60;
 	Number numdev;
-	Rnd rnd;
+	num::Rnd rnd;
 	//Normal rnd;
 	int numsamp;
 	cout << setiosflags(ios::fixed | ios::right) << setprecision(12);
@@ -52,7 +52,7 @@ void generateGraphs() //{{{1 ////////////////////////////////////////
 
 	typedef vector< vector<Line> > tMatrix;
 	tMatrix matrix;
-	for (numdev = Number(16,10); numdev >= 1; numdev -= Number(1,50))
+	for (numdev = num::make<Number>(16,10); numdev >= 1; numdev -= num::make<Number>(1,50))
 	{	
 		matrix.push_back(vector<Line>());
 		vector<Line> & buff = matrix.back();
