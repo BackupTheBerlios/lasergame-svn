@@ -44,6 +44,9 @@ class Field
 
 		void checkPalms(const num::Point & in_p);
 		void checkEnemy(const num::Point & in_p);
+
+		num::Dist palm1Dist(const num::Point & in_p) const { return m_palm1.distanceTo(in_p); }
+		num::Dist palm2Dist(const num::Point & in_p) const { return m_palm2.distanceTo(in_p); }
 };
 
 #endif // ESTER_FILED_H_INCLUDED
