@@ -6,7 +6,9 @@ lib odelib : : <name>ode ;
 
 #lib controller : EsterSimul Move EsterUSB MCL /cam//cam /mcl//mcl $(libs) : <link>static ;
 
-unit-test simul-test : simul-test.cpp simul.cpp robots/four-wheeler.cpp $(libs) odelib ;
+unit-test simul-test : simul-test.cpp simul.cpp $(libs) odelib ;
+
+unit-test four-wheeler-test : robots/four-wheeler-test.cpp simul.cpp robots/four-wheeler.cpp $(libs) odelib ;
 
 #my-test move-test : MoveTest.cpp Move EsterSimul $(libs) ;
 #my-test ball-scan-test : BallScanTest.cpp EsterSimul Move $(libs) ;
