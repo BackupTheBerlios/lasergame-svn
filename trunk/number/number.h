@@ -21,9 +21,9 @@ namespace num {
 		double diff = a - b;
 		return diff < eps && diff > -eps;
 	}
-	inline int roundToInt(const double &in, const int div) 
+	inline int roundToInt(const double &in, const int mult) 
 	{ 
-		return in > 0 ? int(in/div + 0.5) : int(in/div -0.5); 
+		return in > 0 ? int(in*mult + 0.5) : int(in*mult -0.5); 
 	}
 	inline int roundToInt(const double &in) 
 	{ 
