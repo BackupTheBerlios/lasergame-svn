@@ -194,13 +194,11 @@ AUTOTEST(testFloorColor) //{{{1
 	
 	// TODO how to test this further?
 }
-//}}}
 
 AUTOTEST(testGP2) //{{{1
 {
-	Dir dirA;
-	conf::Robot a("watchdog, ester-speed, pose-change, pose, gp2top");
-	conf::Robot b; Dir dirB;
+	Dir dirA; conf::Robot a("watchdog, ester-speed, pose-change, pose, gp2top");
+	Dir dirB; conf::Robot b;
 	Field field;
 	field.setPalm(3,5);
 	Task e(new Manager(field, a, b, dirA, dirB));
@@ -236,23 +234,26 @@ AUTOTEST(testGP2) //{{{1
 	REQUIRE( x < Milim(910) && x > Milim(890)  );
 }
 
-#if 0
 AUTOTEST(testBallEating) //{{{1
 {
-	Subs<int> dir(0);
-	Subs<Time> dt(dir, "time-change");
-	Subs<int> watchdog(dir, "watchdog");
-	Subs<int> numBallsIn(dir, "num-balls-in");
+	Dir dirA; conf::Robot a("watchdog, ester-speed, pose-change, pose, balls");
+	Dir dirB; conf::Robot b;
 	Field field;
-	field.setBall(0,1,2);
-	Task e(new Simul(dir, &field, 0));
-	waitFor(dt);         // wait until simulator is ready
-	watchdog.publish();  // step forward
-	waitFor(numBallsIn); // wait for the message to come in
+	field.setPalm(3,5);
+	Task e(new Manager(field, a, b, dirA, dirB));
+
+	Subs<bool> watchdog(dirA, "watchdog");
+	Subs<int> inBalls(dirA, "in-balls");
+	
+	waitFor(inBalls);
+	watchdog.publish();
+	waitFor(inBalls);
 	
 	// TODO who to test this further?
 }
+//}}}
 
+#if 0
 AUTOTEST(testCamera) //{{{1
 {
 	Subs<int> dir(0);
