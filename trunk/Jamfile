@@ -4,6 +4,7 @@ project
 		<include>.
 		<variant>debug:<define>_DEBUG
 		<toolset>msvc:<cxxflags>/W3
+		<threading>multi
 	: build-dir _build 
 	;
 

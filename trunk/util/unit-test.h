@@ -60,24 +60,10 @@ int main(int argc, char* argv[])
 		fputc('.', stdout);
 		s_tests[i]();
 	}
-	char buffer[100];
 	if (s_failed)
-	{
-		fputs("\nFAILED (", stdout);
-		itoa(s_failed, buffer, 10);
-		fputs(buffer, stdout);
-		fputs(") out of ", stdout);
-		itoa(s_numtests, buffer, 10);
-		fputs(buffer, stdout);
-		fputs(" tests.\n", stdout);
-	}
+		fprintf(stdout, "\nFAILED (%d) out of %d tests.\n", s_failed, s_numtests);
 	else
-	{
-		fputs("\nOK (", stdout);
-		itoa(s_numtests, buffer, 10);
-		fputs(buffer, stdout);
-		fputs(")\n", stdout);
-	}
+		fprintf(stdout, "\nOK (%d)\n", s_numtests);
 	return s_failed;
 }
 
