@@ -17,13 +17,13 @@ namespace {
 
 AUTOTEST(testTime) //{{{1
 {
-	conf::Robot a("watchdog"); Dir dirA;
-	conf::Robot b; Dir dirB;
-	Field field;
-	Task e(new Manager(field, a, b, dirA, dirB));
-
+	Dir dirA; Dir dirB; 
 	Subs<bool> watchdog(dirA, "watchdog");
 	Subs<Time> dt(dirA, "time-change");
+
+	conf::Robot a("watchdog"); conf::Robot b; Field field;
+	Task e(new Manager(field, a, b, dirA, dirB));
+
 	int i = 0;
 	for ( ; i < 10; i++)
 	{
@@ -36,16 +36,16 @@ AUTOTEST(testTime) //{{{1
 
 AUTOTEST(testLinearSpeed) //{{{1
 {
-	conf::Robot a("watchdog, ester-speed"); Dir dirA;
-	conf::Robot b; Dir dirB;
-	Field field;
-	Task e(new Manager(field, a, b, dirA, dirB));
-
+	Dir dirA; Dir dirB; 
 	Subs<bool> watchdog(dirA, "watchdog");
-
 	Subs< std::pair<num::Time, num::Speed> > cur(dirA, "time-change+speed-current");
 	Subs<Speed> req(dirA, "speed-requested");
 	
+	conf::Robot a("watchdog, ester-speed");
+	conf::Robot b;
+	Field field;
+	Task e(new Manager(field, a, b, dirA, dirB));
+
 	waitFor(cur);
 	int i = 0;
 
@@ -84,17 +84,17 @@ AUTOTEST(testLinearSpeed) //{{{1
 
 AUTOTEST(testMove) //{{{1
 {
-	conf::Robot a("watchdog, ester-speed, pose-change"); Dir dirA;
-	conf::Robot b; Dir dirB;
-	Field field;
-	Task e(new Manager(field, a, b, dirA, dirB));
-
+	Dir dirA; Dir dirB; 
 	Subs<bool> watchdog(dirA, "watchdog");
-
 	Subs<Time> dt(dirA, "time-change");
 	Subs<Pose> dp(dirA, "pose-change");
 	Subs<Speed> req(dirA, "speed-requested");
 	
+	conf::Robot a("watchdog, ester-speed, pose-change");
+	conf::Robot b;
+	Field field;
+	Task e(new Manager(field, a, b, dirA, dirB));
+
 	waitFor(dp);
 	
 	int i = 0;
@@ -118,17 +118,17 @@ AUTOTEST(testMove) //{{{1
 
 AUTOTEST(testTurn) //{{{1
 {
-	conf::Robot a("watchdog, ester-speed, pose-change"); Dir dirA;
-	conf::Robot b; Dir dirB;
-	Field field;
-	Task e(new Manager(field, a, b, dirA, dirB));
-
+	Dir dirA; Dir dirB; 
 	Subs<bool> watchdog(dirA, "watchdog");
-
 	Subs<Time> dt(dirA, "time-change");
 	Subs<Pose> dp(dirA, "pose-change");
 	Subs<Speed> req(dirA, "speed-requested");
 	
+	conf::Robot a("watchdog, ester-speed, pose-change");
+	conf::Robot b;
+	Field field;
+	Task e(new Manager(field, a, b, dirA, dirB));
+
 	waitFor(dp);
 	int i = 0;
 	
@@ -151,17 +151,17 @@ AUTOTEST(testTurn) //{{{1
 
 AUTOTEST(testTruePose) //{{{1
 {
-	conf::Robot a("watchdog, ester-speed, pose-change, pose"); Dir dirA;
-	conf::Robot b; Dir dirB;
-	Field field;
-	Task e(new Manager(field, a, b, dirA, dirB));
-
+	Dir dirA; Dir dirB; 
 	Subs<bool> watchdog(dirA, "watchdog");
-
 	Subs<Time>   dt(dirA, "time-change");
 	Subs<Speed> req(dirA, "speed-requested");
 	Subs<Pose> pose(dirA, "pose");
 	
+	conf::Robot a("watchdog, ester-speed, pose-change, pose");
+	conf::Robot b;
+	Field field;
+	Task e(new Manager(field, a, b, dirA, dirB));
+
 	waitFor(pose);
 
 	Time t = Sec(1);
@@ -179,15 +179,15 @@ AUTOTEST(testTruePose) //{{{1
 
 AUTOTEST(testFloorColor) //{{{1
 { 
-	Dir dirA;
-	conf::Robot a("watchdog, ester-speed, pose-change, pose, floor-color");
-	conf::Robot b; Dir dirB;
-	Field field;
-	Task e(new Manager(field, a, b, dirA, dirB));
-
+	Dir dirA; Dir dirB; 
 	Subs<bool> watchdog(dirA, "watchdog");
 	Subs<FloorColor> floorColor(dirA, "floor-color");
 	
+	conf::Robot a("watchdog, ester-speed, pose-change, pose, floor-color");
+	conf::Robot b;
+	Field field;
+	Task e(new Manager(field, a, b, dirA, dirB));
+
 	waitFor(floorColor); // wait until simulator is ready
 	watchdog.publish();  // make step
 	waitFor(floorColor); // wait for floor color message to come in
@@ -197,18 +197,19 @@ AUTOTEST(testFloorColor) //{{{1
 
 AUTOTEST(testGP2) //{{{1
 {
-	Dir dirA; conf::Robot a("watchdog, ester-speed, pose-change, pose, gp2top");
-	Dir dirB; conf::Robot b;
-	Field field;
-	field.setPalm(3,5);
-	Task e(new Manager(field, a, b, dirA, dirB));
-	
+	Dir dirA; Dir dirB; 
 	Subs<bool> watchdog(dirA, "watchdog");
 	Subs<Time> dt(dirA, "time-change");
 	Subs<Speed> req(dirA, "speed-requested");
 	Subs<Pose> pose(dirA, "pose");
 	Subs<double> gp2(dirA, "gp2top");
 
+	conf::Robot a("watchdog, ester-speed, pose-change, pose, gp2top");
+	conf::Robot b;
+	Field field;
+	field.setPalm(3,5);
+	Task e(new Manager(field, a, b, dirA, dirB));
+	
 	waitFor(gp2);         // wait until simulator is ready
 	
 	double max = 0;
@@ -236,15 +237,16 @@ AUTOTEST(testGP2) //{{{1
 
 AUTOTEST(testBallEating) //{{{1
 {
-	Dir dirA; conf::Robot a("watchdog, ester-speed, pose-change, pose, ball-manip");
-	Dir dirB; conf::Robot b;
+	Dir dirA; Dir dirB; 
+	Subs<bool> watchdog(dirA, "watchdog");
+	Subs<int> inBalls(dirA, "in-balls");
+	
+	conf::Robot a("watchdog, ester-speed, pose-change, pose, ball-manip");
+	conf::Robot b;
 	Field field;
 	field.setPalm(3,5);
 	Task e(new Manager(field, a, b, dirA, dirB));
 
-	Subs<bool> watchdog(dirA, "watchdog");
-	Subs<int> inBalls(dirA, "in-balls");
-	
 	waitFor(inBalls);
 	watchdog.publish();
 	waitFor(inBalls);
@@ -254,16 +256,17 @@ AUTOTEST(testBallEating) //{{{1
 
 AUTOTEST(testCamera) //{{{1
 {
-	Dir dirA; conf::Robot a("watchdog, ester-speed, pose-change, pose, ball-detect");
-	Dir dirB; conf::Robot b;
-	Field field;
-	field.setPalm(3,5);
-	Task e(new Manager(field, a, b, dirA, dirB));
-
+	Dir dirA; Dir dirB; 
 	//Subs<Time> dt(dir, "time-change");
 	Subs<bool> watchdog(dirA, "watchdog");
 	Subs<Point> ballOffset(dirA, "ball-offset");
 	Subs<Speed> req(dirA, "speed-requested");
+
+	conf::Robot a("watchdog, ester-speed, pose-change, pose, ball-detect");
+	conf::Robot b;
+	Field field;
+	field.setPalm(3,5);
+	Task e(new Manager(field, a, b, dirA, dirB));
 
 	waitFor(ballOffset);// wait until simulator is ready
 	
