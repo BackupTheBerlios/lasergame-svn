@@ -1,0 +1,16 @@
+# $Id$
+
+project 
+	: requirements 
+		<include>.
+		<variant>debug:<define>_DEBUG
+		<toolset>msvc:<cxxflags>/W3
+		<toolset>msvc:<include>util/win
+		<threading>multi
+	: build-dir _build 
+	;
+
+build-project util ;
+build-project number ;
+build-project mcl ;
+

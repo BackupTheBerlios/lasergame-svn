@@ -1,0 +1,8 @@
+obj mcl : mcl.cpp ;
+
+unit-test mcl-test : mcl-test.cpp mcl ;
+
+exe gengraphs : gengraphs.cpp mcl ;
+
+explicit gengraphs ;
+

@@ -1,0 +1,25 @@
+#import user-settings ;
+#
+#local ARIT = [ modules.peek user-settings : ARIT ] ;
+#
+#project number 
+#	: usage-requirements
+#	: default-build <arit>$(ARIT)
+#	;
+#
+#my-test fixed-test : FixedPointTest.cpp ;
+unit-test rnd-test : rnd-test.cpp ;
+unit-test dist-test : dist-test.cpp ;
+unit-test angle-test : angle-test.cpp ;
+#unit-test test : test.cpp ;
+my-test pose-test : pose-test.cpp ;
+my-test time-test : time-test.cpp ;
+my-test speed-test : speed-test.cpp ;
+#
+#obj number : Number.cpp : <arit>double ;
+#obj number : Number.cpp : <arit>float ;
+#obj number : Number.cpp : <arit>fixed ;
+#obj number : Number.cpp : <arit>debug ;
+#
+#alias test : fixed-test rand-test dist-test angle-test pose-test speed-test time-test ;
+#
