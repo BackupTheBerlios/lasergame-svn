@@ -71,5 +71,39 @@ namespace
 		l.unlock();
 		thread::join(t);
 	} //}}}
+	//{{{1 CondVar
+	thread::CondVar* g_pCV;
+	ulong threadFn4(void* in_data) //{{{2
+	{
+		thread::Lock& l = *(thread::Lock*)in_data;
+		l.lock();
+		REQUIRE( sharedVar == 1 );
+		sharedVar++;
+		g_pCV->broadcast();
+		g_pCV->wait(l);
+		REQUIRE( sharedVar == 3 );
+		sharedVar++;
+		g_pCV->broadcast();
+		l.unlock();
+		return 0;
+	}
+	
+	AUTOTEST(CondVar) //{{{2
+	{
+		thread::CondVar cv;
+		g_pCV = &cv;
+		thread::Lock l;
+		l.lock();
+		sharedVar = 1;
+		thread::id_t t = thread::create(threadFn4, &l);
+		cv.wait(l);
+		REQUIRE( sharedVar == 2 );
+		sharedVar++;
+		cv.broadcast();
+		cv.wait(l);
+		REQUIRE( sharedVar == 4 );
+		l.unlock();
+		thread::join(t);
+	} //}}}
 	//}}}
 }

@@ -3,6 +3,7 @@
  * Implements threading interface from util/thread.h using Win32 API
  * 
  * @author Zbynek Winkler (c) 2004
+ *
  * $Id$
  */
 
@@ -10,6 +11,7 @@
 #include "util/assert.h"
 
 #define WIN32_LEAN_AND_MEAN
+#define _WIN32_WINNT 0x0400 // to get SignalAndWait()
 #include <windows.h>
 
 namespace 
@@ -68,6 +70,23 @@ namespace thread
 	Lock::~Lock()       { CloseHandle((HANDLE)m_lock); }
 	void Lock::lock()   { WaitForSingleObject((HANDLE)m_lock, INFINITE); }
 	void Lock::unlock() { ReleaseMutex((HANDLE)m_lock); }
+
+	CondVar::CondVar() //{{{1
+	{
+		ASSERT( sizeof(HANDLE) == sizeof(CondVar_type) ); 
+		m_cv = CreateEvent(0, TRUE, FALSE, 0); // security, manual reset, initialy signaled, name
+	}
+	CondVar::~CondVar() { CloseHandle(m_cv); }
+	void CondVar::wait(Lock& in_l) 
+	{ 
+		SignalObjectAndWait(in_l.m_lock, m_cv, INFINITE, false);
+		in_l.lock();
+	}
+	void CondVar::broadcast()
+	{
+		BOOL ret UNUSED = PulseEvent(m_cv);
+		ASSERT( ret );
+	}
 	//}}}
 }
 

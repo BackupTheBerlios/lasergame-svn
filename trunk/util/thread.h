@@ -6,6 +6,7 @@
  *   Threading interface to be implemented by Win32 and PThread APIs
  * 
  * @author Zbynek Winkler (c) 2004
+ *
  * $Id$
  */
 
@@ -33,16 +34,19 @@ namespace thread
 			void* getVoid();
 	};
 
+	struct CondVar;
+
 	struct Lock
 	{
 		private:
-			typedef ulong lock_type;
+			typedef void* lock_type;
 			lock_type m_lock;
 		public:
 			Lock();
 			~Lock();
 			void lock();
 			void unlock();
+		friend struct CondVar;
 	};
 
 	struct Locker
@@ -54,6 +58,17 @@ namespace thread
 			~Locker() { m_lock.unlock(); }
 	};
 
+	struct CondVar
+	{
+		private:
+			typedef void* CondVar_type;
+			CondVar_type m_cv;
+		public:
+			CondVar();
+			~CondVar();
+			void wait(Lock&);
+			void broadcast();
+	};
 }
 
 #endif // UTIL_THREAD_H_INCLUDED
