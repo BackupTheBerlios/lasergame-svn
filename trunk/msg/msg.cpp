@@ -22,6 +22,8 @@
 #include <list>
 #include <string>
 #include <algorithm>
+#include <typeinfo>
+//#include <iostream>
 #include "util/thread.h"
 #include "util/assert.h"
 #include "msg/msg.h"
@@ -37,6 +39,8 @@ namespace msg
 		public:
 			TaskItem(SubsBase* in_targetSubs, WrappedBase* in_user) 
 				: m_subs(in_targetSubs), m_user(in_user) {}
+			/// Intentionaly blank 
+			~TaskItem() {}
 			SubsBase* getSubs() { return m_subs; }
 			void destroy() { delete m_user; m_user = 0; }
 			void assign() { m_user->assignTo(m_subs); destroy(); }
@@ -50,6 +54,8 @@ namespace msg
 
 	class TaskImpl : public std::list<TaskItem>, public thread::Lock, public thread::CondVar //{{{1
 	{
+		friend class Task;
+		thread::id_t m_thread;
 		bool m_running;
 		public:
 			TaskImpl() : m_running(true) { }
@@ -131,12 +137,73 @@ namespace
 }
 
 namespace msg {
+	
 	class Channel : public std::list<SubsBase*> //{{{1
 	{
 		public:
 			AllSubs::iterator m_self;
 			Channel() : m_self(0) {}
 	};
+
+	SubsBase::SubsBase() : m_pChannel(0), m_taskImpl(*s_impl()) //{{{1
+	{
+	}
+
+	void SubsBase::subscribe() //{{{1
+	{
+		ASSERT( m_pChannel == 0 );
+		m_pChannel = new Channel();
+		m_pChannel->push_back(this);
+	}
+
+	void SubsBase::subscribe(const char * in_name) //{{{1
+	{
+		using namespace std;
+		ASSERT( m_pChannel == 0 );
+		Locker lock(s_allSubs);
+		m_pChannel = s_allSubs.getChannel(in_name);
+		// check type
+		if (!m_pChannel->empty())
+		{
+			//cout << typeid(*this).name() << " X " << typeid(*m_pChannel->front()).name() << endl;
+			if ( typeid(*this) != typeid(*m_pChannel->front()))
+				throw bad_type();
+		}
+		m_pChannel->push_back(this);
+	}
+
+	void SubsBase::subscribe(Channel* in_pChannel) //{{{1
+	{
+		ASSERT( m_pChannel == 0 );
+		Locker lock(s_allSubs);
+		m_pChannel = in_pChannel;
+		// check type
+		if (!m_pChannel->empty())
+		{
+			if ( typeid(*this) != typeid(*m_pChannel->front()))
+				throw bad_type();
+		}
+		m_pChannel->push_back(this);
+	}
+
+	SubsBase::~SubsBase() //{{{1
+	{
+		ASSERT( m_pChannel != 0 );
+		{
+			Locker lock(s_allSubs);
+			// 1. deregister this subs
+			m_pChannel->erase(std::find(m_pChannel->begin(), m_pChannel->end(), this));
+			// 2. if this was the last subs under the group, delete it
+			if (m_pChannel->empty())
+			{
+				if (m_pChannel->m_self != AllSubs::iterator(0))
+					s_allSubs.erase(m_pChannel->m_self);
+				delete m_pChannel;
+			}
+		}
+		// 3. go through the task queue and delete all messages destined to this subs
+		destroyItemsFor(this);
+	}
 
 void SubsBase::publish() const //{{{1
 {
@@ -146,45 +213,6 @@ void SubsBase::publish() const //{{{1
 		if (*i != this)
 			(*i)->m_taskImpl.push_back_locked(*i, createWrapped()); // thread safe
 	}
-}
-
-SubsBase::SubsBase() : m_pChannel(new Channel()), m_taskImpl(*s_impl()) //{{{1
-{
-	// no need to lock since nobody else has access to this newly created channel
-	m_pChannel->push_back(this);
-}
-
-SubsBase::SubsBase(const char * in_name) : m_pChannel(s_allSubs.getChannel(in_name)), m_taskImpl(*s_impl()) //{{{1
-{
-	Locker lock(s_allSubs);
-	// 1. register this subs
-	m_pChannel->push_back(this);
-}
-
-SubsBase::SubsBase(Channel* in_pChannel) : m_pChannel(in_pChannel), m_taskImpl(*s_impl()) //{{{1
-{
-	Locker lock(s_allSubs);
-	// 1. register this subs
-	m_pChannel->push_back(this);
-}
-
-
-SubsBase::~SubsBase() //{{{1
-{
-	{
-		Locker lock(s_allSubs);
-		// 1. deregister this subs
-		m_pChannel->erase(std::find(m_pChannel->begin(), m_pChannel->end(), this));
-		// 2. if this was the last subs under the group, delete it
-		if (m_pChannel->empty())
-		{
-			if (m_pChannel->m_self != AllSubs::iterator(0))
-				s_allSubs.erase(m_pChannel->m_self);
-			delete m_pChannel;
-		}
-	}
-	// 3. go through the task queue and delete all messages destined to this subs
-	destroyItemsFor(this);
 }
 
 // remove the item from the top of the current task queue, thread safe, blocking
@@ -207,25 +235,25 @@ SubsBase* processSubs() //{{{1
 	// [4. auto-unlock]
 }
 
-void waitFor(SubsBase& in_subs) //{{{
+void waitFor(SubsBase& in_subs) //{{{1
 {
 	while (processSubs() != &in_subs)
 		;
 }
 //}}}
 
-Task::Task(FactoryBase* in_Factory) //{{{1
+Task::Task(FactoryBase* in_factory) //{{{1
 {
 	// create support structures for messages
 	m_pimpl = new TaskImpl();
-	in_Factory->m_taskImpl = m_pimpl;
-	m_id = thread::create(threadFn, in_Factory);
+	in_factory->m_taskImpl = m_pimpl;
+	m_pimpl->m_thread = thread::create(threadFn, in_factory);
 }
 
 Task::~Task() //{{{1
 {
 	m_pimpl->stop();
-	thread::join(m_id);
+	thread::join(m_pimpl->m_thread);
 	delete m_pimpl;
 }
 //}}}

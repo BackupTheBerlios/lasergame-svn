@@ -49,8 +49,6 @@
  * 	in Eurobot 2004 (Sirael Team).
  */
 
-#include "util/thread.h"
-
 namespace msg
 {
 	class TaskImpl;
@@ -140,7 +138,6 @@ namespace msg
 
 	class Task
 	{
-		thread::id_t m_id;
 		TaskImpl* m_pimpl;
 		public:
 			/// creates thread
@@ -156,15 +153,17 @@ namespace msg
 	};
 
 	class Channel;
-	
+	class bad_type {};
 	class SubsBase
 	{
 		Channel* m_pChannel;
 		TaskImpl& m_taskImpl;
+		protected:
+			void subscribe();
+			void subscribe(const char* in_name);
+			void subscribe(Channel* in_pChannel);
 		public:
 			SubsBase();
-			SubsBase(const char* in_name);
-			SubsBase(Channel* in_pChannel);
 			Channel* getChannel() { return m_pChannel; }
 			virtual ~SubsBase();
 			virtual WrappedBase* createWrapped() const = 0;
@@ -191,9 +190,9 @@ namespace msg
 			Subs(const Subs&) {}
 		public:
 			T value;
-			Subs() {}
-			Subs(const char* in_name) : SubsBase(in_name) {}
-			Subs(Channel* in_pChannel) : SubsBase(in_pChannel) {}
+			Subs() { subscribe(); }
+			Subs(const char* in_name) { subscribe(in_name); }
+			Subs(Channel* in_pChannel) { subscribe(in_pChannel); }
 			virtual WrappedBase* createWrapped() const
 			{
 				return new Wrapped<T>(value);
