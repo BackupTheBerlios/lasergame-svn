@@ -115,9 +115,7 @@ public:
 	/// Equality with epsilon (which is PoseT also)
 	bool eq(const PoseT& in_p = PoseT(), const PoseT& eps = PoseT::EPSILON()) const //{{{2
 	{
-		return m_x.eq(in_p.m_x, eps.m_x) && 
-		       m_y.eq(in_p.m_y, eps.m_y) && 
-		       m_heading.eq(in_p.m_heading, eps.m_heading);
+		return m_point.eq(in_p.m_point, eps.m_point) && m_heading.eq(in_p.m_heading, eps.m_heading);
 	}
 
 	static inline PoseT EPSILON() //{{{2
