@@ -90,7 +90,7 @@ public:
 	}
 	double operator / (const Time& a_time) const
 	{
-		return m_time/a_time.m_time;
+		return double(m_time)/a_time.m_time;
 	}
 	//}}}
 };
