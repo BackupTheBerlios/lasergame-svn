@@ -14,11 +14,11 @@ namespace {
 
 AUTOTEST(testTime) //{{{1
 {
-	Subs<int> dir;
+	Subs<int> dir(0);
 	Subs<Time> dt(dir, "time-change");
 	Subs<int> watchdog(dir, "watchdog");
 	Field field;
-	Task e(Simul::fac(dir, &field, 0));
+	Task e(new Simul(dir, &field, 0));
 	int i = 0;
 	for ( ; i < 10; i++)
 	{
@@ -31,14 +31,14 @@ AUTOTEST(testTime) //{{{1
 
 AUTOTEST(testLinearSpeed) //{{{1
 {
-	Subs<int> dir;
+	Subs<int> dir(0);
 	Subs<Time> dt(dir, "time-change");
 	Subs<int> watchdog(dir, "watchdog");
 	Subs<Speed> cur(dir, "speed-current");
 	Subs<Speed> req(dir, "speed-requested");
 	
 	Field field;
-	Task e(Simul::fac(dir, &field, 0));
+	Task e(new Simul(dir, &field, 0));
 	waitFor(dt);
 	int i = 0;
 
@@ -76,14 +76,14 @@ AUTOTEST(testLinearSpeed) //{{{1
 
 AUTOTEST(testMove) //{{{1
 {
-	Subs<int> dir;
+	Subs<int> dir(0);
 	Subs<Time> dt(dir, "time-change");
 	Subs<int> watchdog(dir, "watchdog");
 	Subs<Pose> dp(dir, "pose-change");
 	Subs<Speed> req(dir, "speed-requested");
 	
 	Field field;
-	Task e(Simul::fac(dir, &field, 0));
+	Task e(new Simul(dir, &field, 0));
 	waitFor(dt);
 	int i = 0;
 	
@@ -106,13 +106,13 @@ AUTOTEST(testMove) //{{{1
 
 AUTOTEST(testTurn) //{{{1
 {
-	Subs<int> dir;
+	Subs<int> dir(0);
 	Subs<Time> dt(dir, "time-change");
 	Subs<int> watchdog(dir, "watchdog");
 	Subs<Pose> dp(dir, "pose-change");
 	Subs<Speed> req(dir, "speed-requested");
 	Field field;
-	Task e(Simul::fac(dir, &field, 0));
+	Task e(new Simul(dir, &field, 0));
 	int i = 0;
 	waitFor(dt);
 	
@@ -135,13 +135,13 @@ AUTOTEST(testTurn) //{{{1
 
 AUTOTEST(testFloorColor) //{{{1
 {
-	Subs<int> dir;
+	Subs<int> dir(0);
 	Subs<Time> dt(dir, "time-change");
 	Subs<int> watchdog(dir, "watchdog");
 	Subs<FloorColor> floorColor(dir, "floor-color");
 	
 	Field field;
-	Task e(Simul::fac(dir, &field, 0));
+	Task e(new Simul(dir, &field, 0));
 	waitFor(dt);         // wait until simulator is ready
 	watchdog.publish();  // make step
 	waitFor(floorColor); // wait for floor color message to come in
@@ -151,14 +151,14 @@ AUTOTEST(testFloorColor) //{{{1
 
 AUTOTEST(testTruePose) //{{{1
 {
-	Subs<int> dir;
+	Subs<int> dir(0);
 	Subs<Time> dt(dir, "time-change");
 	Subs<int> watchdog(dir, "watchdog");
 	Subs<Pose> pose(dir, "true-pose");
 	Subs<Speed> req(dir, "speed-requested");
 
 	Field field;
-	Task e(Simul::fac(dir, &field, 0));
+	Task e(new Simul(dir, &field, 0));
 	waitFor(dt);         // wait until simulator is ready
 	
 	Time t = Sec(1);
@@ -176,7 +176,7 @@ AUTOTEST(testTruePose) //{{{1
 
 AUTOTEST(testGP2) //{{{1
 {
-	Subs<int> dir;
+	Subs<int> dir(0);
 	Subs<Time> dt(dir, "time-change");
 	Subs<int> watchdog(dir, "watchdog");
 	Subs<Speed> req(dir, "speed-requested");
@@ -185,7 +185,7 @@ AUTOTEST(testGP2) //{{{1
 
 	Field field;
 	field.setPalm(3,5);
-	Task e(Simul::fac(dir, &field, 0));
+	Task e(new Simul(dir, &field, 0));
 	waitFor(dt);         // wait until simulator is ready
 	
 	double max = 0;
@@ -213,13 +213,13 @@ AUTOTEST(testGP2) //{{{1
 
 AUTOTEST(testBallEating) //{{{1
 {
-	Subs<int> dir;
+	Subs<int> dir(0);
 	Subs<Time> dt(dir, "time-change");
 	Subs<int> watchdog(dir, "watchdog");
 	Subs<int> numBallsIn(dir, "num-balls-in");
 	Field field;
 	field.setBall(0,1,2);
-	Task e(Simul::fac(dir, &field, 0));
+	Task e(new Simul(dir, &field, 0));
 	waitFor(dt);         // wait until simulator is ready
 	watchdog.publish();  // step forward
 	waitFor(numBallsIn); // wait for the message to come in
@@ -229,14 +229,14 @@ AUTOTEST(testBallEating) //{{{1
 
 AUTOTEST(testCamera) //{{{1
 {
-	Subs<int> dir;
+	Subs<int> dir(0);
 	Subs<Time> dt(dir, "time-change");
 	Subs<int> watchdog(dir, "watchdog");
 	Subs<Point> ball(dir, "ball");
 	Subs<Speed> req(dir, "speed-requested");
 	
 	Field field;
-	Task e(Simul::fac(dir, &field, 0));
+	Task e(new Simul(dir, &field, 0));
 	waitFor(dt);         // wait until simulator is ready
 	
 	for (int i = 0; i < 20; i++)
@@ -258,13 +258,13 @@ AUTOTEST(testCamera) //{{{1
 
 AUTOTEST(testEnemy) //{{{1
 {
-	Subs<int> dir;
+	Subs<int> dir(0);
 	Subs<Time> dt(dir, "time-change");
 	Subs<int> watchdog(dir, "watchdog");
 	Subs<Point> enemy(dir, "enemy");
 	
 	Field field;
-	Task e(Simul::fac(dir, &field, 0));
+	Task e(new Simul(dir, &field, 0));
 	waitFor(dt);         // wait until simulator is ready
 	watchdog.publish();  // make step
 	waitFor(enemy);      // wait for the message to come in

@@ -147,45 +147,9 @@ Point calcCamera(const Balls& in_balls, const Pose & in_pose) //{{{1
 }
 
 Simul::Simul(msg::Channel* in_p, Field* in_field, int in_side) //{{{1
-	: m_field(*in_field),
-		m_watchdog    (in_p, "watchdog"),
-		m_seed        (in_p, "seed"),
-		m_timeChange  (in_p, "time-change"),
-		m_poseChange  (in_p, "pose-change"),
-		m_pose        (in_p, "true-pose"),
-		m_currentSpeed(in_p, "speed-current"),
-		m_reqSpeed    (in_p, "speed-requested", this, &Simul::reqSpeed),
-		
-		m_start       (in_p, "start"),
-		m_ballPos     (in_p, "ball"),
-		m_enemy       (in_p, "enemy"),
-		m_floorColor  (in_p, "floor-color"),
-		m_numBallsIn  (in_p, "num-balls-in"),
-		m_gp2top      (in_p, "gp2top"),
-		m_reqShoot    (in_p, "shoot-req", this, &Simul::reqShoot),
-		
-		AERR(0), FERR(0), DERR(0), m_camTick(0)
+	: m_p(in_p), m_field(*in_field), AERR(0), FERR(0), DERR(0)
 {
 	ASSERT( in_field != 0 );
-	//m_seed.value = time(NULL);
-	m_seed.value = 1;
-	m_timeChange.value = num::MSec(5);
-	m_pose.value  = measures::INITIAL();
-	m_start.value = true;
-	m_numBallsIn.value = 0;
-	m_rnd.setSeed(m_seed.value);
-
-	// Ester
-	int n = 0;
-	m_floorColor.value[n++] = Point(Milim( 14), Milim( 96));
-	m_floorColor.value[n++] = Point(Milim(113), Milim( 96));
-	m_floorColor.value[n++] = Point(Milim(-62), Milim( 45));
-	m_floorColor.value[n++] = Point(Milim( 15), Milim( 35));
-	m_floorColor.value[n++] = Point(Milim( 15), Milim(-36));
-	m_floorColor.value[n++] = Point(Milim(-62), Milim(-41));
-	m_floorColor.value[n++] = Point(Milim(111), Milim(-96));
-	m_floorColor.value[n++] = Point(Milim( 14), Milim(-96));
-	ASSERT( n == m_floorColor.value.N_ITEM );
 }
 
 Simul::~Simul() //{{{1
@@ -194,42 +158,87 @@ Simul::~Simul() //{{{1
 
 void Simul::main() //{{{1
 {
+	//{{{2 Subs
+	msg::Subs<int>       watchdog(m_p, "watchdog");
+	msg::Subs<uint32_t>  seed(m_p, "seed");
+	msg::Subs<num::Time> timeChange(m_p, "time-change");
+	msg::Subs<num::Pose> poseChange(m_p, "pose-change");
+	msg::Subs<num::Pose> pose(m_p, "true-pose");
+	msg::Subs<num::Speed> currentSpeed(m_p, "speed-current");
+	
+	msg::Subs<num::Speed, Simul> reqSpeed(m_p, "speed-requested", this, &Simul::reqSpeed);
+	
+	msg::Subs<bool> start(m_p, "start");
+	msg::Subs<num::Point> ballPos(m_p, "ball"); ///< Position of a primary ball in a local frame
+	msg::Subs<num::Point> enemy(m_p, "enemy");   ///< Position of enemy in a local frame
+	msg::Subs<FloorColor> floorColor(m_p, "floor-color");
+	msg::Subs<int> numBallsIn(m_p, "num-balls-in");
+	msg::Subs<double> gp2top(m_p, "gp2top");
+
+	msg::Subs<num::Dist, Simul> reqShoot(m_p, "shoot-req", this, &Simul::reqShoot);
+
+	//{{{2 Init
+	//seed.value = time(NULL);
+	seed.value = 1;
+	num::Rnd rnd;
+	rnd.setSeed(seed.value);
+	int camTick = 0;
+		
+	timeChange.value = num::MSec(5);
+	pose.value  = measures::INITIAL();
+	start.value = true;
+	numBallsIn.value = 0;
+
+	// Ester
+	int n = 0;
+	floorColor.value[n++] = Point(Milim( 14), Milim( 96));
+	floorColor.value[n++] = Point(Milim(113), Milim( 96));
+	floorColor.value[n++] = Point(Milim(-62), Milim( 45));
+	floorColor.value[n++] = Point(Milim( 15), Milim( 35));
+	floorColor.value[n++] = Point(Milim( 15), Milim(-36));
+	floorColor.value[n++] = Point(Milim(-62), Milim(-41));
+	floorColor.value[n++] = Point(Milim(111), Milim(-96));
+	floorColor.value[n++] = Point(Milim( 14), Milim(-96));
+	ASSERT( n == floorColor.value.N_ITEM );
+
+	//}}}
+
 	while (true)
 	{
-		m_timeChange.publish();
+		timeChange.publish();
 		//cout << "Waiting for watchdog" << endl;
-		waitFor(m_watchdog);
+		waitFor(watchdog);
 		
-		updateSpeed(m_currentSpeed.value, m_reqSpeed.value, m_timeChange.value);
-		m_currentSpeed.publish();
+		updateSpeed(currentSpeed.value, reqSpeed.value, timeChange.value);
+		currentSpeed.publish();
 		
-		m_poseChange.value = calcPoseChange(m_currentSpeed.value, m_timeChange.value);
-		m_poseChange.publish();
+		poseChange.value = calcPoseChange(currentSpeed.value, timeChange.value);
+		poseChange.publish();
 		
-		updatePose(m_pose.value, m_poseChange.value, AERR, FERR, DERR, m_rnd);
-		m_pose.publish();
+		updatePose(pose.value, poseChange.value, AERR, FERR, DERR, rnd);
+		pose.publish();
 		
-		updateFloorColor(m_floorColor.value, m_pose.value, m_side);
-		m_floorColor.publish();
+		updateFloorColor(floorColor.value, pose.value, m_side);
+		floorColor.publish();
 		
-		m_gp2top.value = calcGP2top(m_field, m_pose.value);
-		m_gp2top.publish();
+		gp2top.value = calcGP2top(m_field, pose.value);
+		gp2top.publish();
 		
-		m_numBallsIn.value += m_field.tryEatBall(m_pose.value, BALL_EAT_DIST());
-		m_numBallsIn.publish();
+		numBallsIn.value += m_field.tryEatBall(pose.value, BALL_EAT_DIST());
+		numBallsIn.publish();
 
-		++m_camTick %= 5;
-		if (m_camTick == 0) 
+		++camTick %= 5;
+		if (camTick == 0) 
 		{
-			m_ballPos.value = calcCamera(m_field.m_balls, m_pose.value);
-			m_ballPos.publish();
+			ballPos.value = calcCamera(m_field.m_balls, pose.value);
+			ballPos.publish();
 		}
 		
-		m_enemy.value = m_pose.value.offsetTo(m_field.enemy());
-		m_enemy.publish();
+		enemy.value = pose.value.offsetTo(m_field.enemy());
+		enemy.publish();
 
-		m_field.checkPalms(m_pose.value.point());
-		m_field.checkEnemy(m_pose.value.point());
+		m_field.checkPalms(pose.value.point());
+		m_field.checkEnemy(pose.value.point());
 	}
 }
 
@@ -240,10 +249,13 @@ void Simul::reqSpeed() //{{{1
 
 void Simul::reqShoot() //{{{1
 {
+#if 0
+	// TODO !!!
 	ASSERT( m_numBallsIn.value > 0 );
 	ASSERT( m_reqShoot.value.gt() );
 	while (m_numBallsIn.value-- > 0)
 		m_field.shootBall(m_pose.value);
+#endif
 }
 //}}}1
 #if 0
