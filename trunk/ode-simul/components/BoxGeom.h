@@ -15,7 +15,6 @@ class BoxGeom : public Geom
 {
 	public:
 		BoxGeom(Body* in_pBody, World* in_pWorld, double x, double y, double z);
-		virtual int id() {return 1;} 
 		virtual ~BoxGeom() {}
 };
 
