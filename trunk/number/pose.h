@@ -129,6 +129,7 @@ public:
 	const Angle & heading() const { return m_heading; }
 	const DistT<T> & x() const { return m_point.x(); }
 	const DistT<T> & y() const { return m_point.y(); }
+	const PointT<T> & point() const { return m_point; }
 	Angle & heading() { return m_heading; }
 	DistT<T> & x() { return m_point.x(); }
 	DistT<T> & y() { return m_point.y(); }
