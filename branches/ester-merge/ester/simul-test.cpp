@@ -28,9 +28,8 @@ AUTOTEST(testTime) //{{{1
 	}
 	REQUIRE( i == 10 );
 }
-//}}}
 
-AUTOTEST(testFSpeed) //{{{1
+AUTOTEST(testLinearSpeed) //{{{1
 {
 	Subs<int> dir;
 	Subs<Time> dt(dir, "time-change");
@@ -74,51 +73,39 @@ AUTOTEST(testFSpeed) //{{{1
 	REQUIRE( !cur.value.m_linear.gt() );
 	REQUIRE( i == 132); // 136
 }
-//}}}
 
-#if 0
-//{{{1 testMove()
-struct TestMove : public Action //{{{2
+AUTOTEST(testMove) //{{{1
 {
-	int m_count;
-	virtual int main()
+	Subs<int> dir;
+	Subs<Time> dt(dir, "time-change");
+	Subs<int> watchdog(dir, "watchdog");
+	Subs<Pose> dp(dir, "pose-change");
+	Subs<Speed> req(dir, "speed-requested");
+	
+	Field field;
+	Task e(Simul::fac(dir, field, 0));
+	waitFor(dt);
+	int i = 0;
+	
+	Time t = Sec(2);
+	Meter d(1);
+	req.value.m_linear = Milim(1070);
+	req.publish();
+	while( t.gt() && d.gt() )
 	{
-		using num::Milim; using num::Meter; using num::Sec; using num::Time; using num::FSpeed;
-		msg::TimeChange dt;
-		Subs s1("time_change", &dt);
-		msg::Speed requestedSpeed;
-		Regs r1("cz.robotika.ester.requested_speed", &requestedSpeed);
-		msg::PoseChange dp;
-		Subs s2("cz.robotika.ester.pose_change", &dp);
-		m_count = 0;
-		execute();
-
-		Time t = Sec(2);
-		Meter d(1);
-		requestedSpeed.m_time = dt.m_time;
-		requestedSpeed.m_v = Milim(1070);
-		while( t.gt() && d.gt() )
-		{
-			execute();
-			t -= dt.m_dt;
-			d -= dp.m_dp.m_f;
-			m_count++;
-			//cout << t.ms() << ": " << d.mm() << endl;
-		}
-		ASSERT( !d.gt() );
-		return 0;
+		t -= dt.value;
+		d -= dp.value.x();
+		i++;
+		watchdog.publish();
+		waitFor(dt);
+		//cout << t.ms() << ": " << d.mm() << endl;
 	}
-};
-
-AUTOTEST(testMove) //{{{2
-{
-	EsterSimul t2;
-	TestMove t3;
-	g_main.waitForAny();
-	CPPUNIT_ASSERT_EQUAL( 241, t3.m_count );
+	REQUIRE( !d.gt() );
+	REQUIRE( i == 241 );
 }
 //}}}
 
+#if 0
 //{{{1 testTurn()
 struct TestTurn : public Action //{{{2
 {

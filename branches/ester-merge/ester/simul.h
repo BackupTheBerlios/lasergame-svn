@@ -59,7 +59,6 @@ class Simul : public msg::Runnable
 	private:
 		void reqSpeed();
 		void reqShoot();
-		void upPose();
 
 #if 0
 	void upMoveState();

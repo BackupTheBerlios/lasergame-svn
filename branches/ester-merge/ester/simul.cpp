@@ -1,5 +1,4 @@
 #include "simul.h"
-#include "model-base.h"
 //#include "util/measures.h"
 #include "util/assert.h"
 
@@ -70,6 +69,25 @@ static void updateSpeed(num::Speed & in_old, const num::Speed & in_req, const nu
 	else if (in_old.m_angular.lt(in_req.m_angular))
 		in_old.m_angular += AngularSpeed(Deg(1000) * (in_dt/Sec(1)));
 }
+
+void updatePoseChange(Pose & in_dp, const Speed & in_speed, const Time & in_dt) //{{{1
+{
+	in_dp.x() = in_speed.m_linear * in_dt;
+	in_dp.y() = Milim(0);
+	in_dp.heading() = in_speed.m_angular * in_dt;
+}
+
+void updatePose(Pose & in_p, const Pose & in_dp, const Angle::type& AERR, const Dist::type& FERR, const Angle::type& DERR, Rnd & in_rnd) //{{{1
+{
+	in_p.advanceBy(in_dp.x() + in_dp.x() * FERR * in_rnd());
+	in_p.turnBy(in_dp.heading() + in_dp.heading() * AERR * in_rnd());
+	
+	num::Meter df = (in_dp.heading()/num::Rad(1) * DERR) * in_rnd();
+	num::Meter ds = (in_dp.heading()/num::Rad(1) * DERR) * in_rnd();
+	in_p.offsetBy(df, ds);
+
+	in_p.heading().normalize();
+}
 //}}}
 }
 
@@ -116,12 +134,12 @@ void Simul::main() //{{{1
 		updateSpeed(m_currentSpeed.value, m_reqSpeed.value, m_timeChange.value);
 		m_currentSpeed.publish();
 		
-		//updatePoseChange(m_poseChange.value, m_currentSpeed.value, m_timeChange.value);
-		//m_poseChange.publish();
-		//
-		//updatePose(m_pose.value, m_poseChange.value);
-		//m_pose.publish();
-		//
+		updatePoseChange(m_poseChange.value, m_currentSpeed.value, m_timeChange.value);
+		m_poseChange.publish();
+		
+		updatePose(m_pose.value, m_poseChange.value, AERR, FERR, DERR, m_rnd);
+		m_pose.publish();
+		
 		//updateFloorColor(m_floorColor.value, m_pose.value);
 		//m_floorColor.publish();
 		//
@@ -145,27 +163,9 @@ void Simul::setError(const Angle::type& in_ae, const Dist::type& in_fe, const An
 }
 #endif
 
-
-void Simul::upPose() //{{{1
-{
-	num::Pose& m_dp(m_poseChange.value);
-	m_dp.x() = m_currentSpeed.value.m_linear * m_timeChange.value;
-	m_dp.y() = Milim(0);
-	m_dp.heading() = m_currentSpeed.value.m_angular * m_timeChange.value;
-
-	num::Pose& m_p(m_pose.value);
-	m_p.advanceBy(m_dp.x() + m_dp.x() * FERR * m_rnd());
-	m_p.turnBy(m_dp.heading() + m_dp.heading() * AERR * m_rnd());
-	
-	num::Meter df = (m_dp.heading()/num::Rad(1) * DERR) * m_rnd();
-	num::Meter ds = (m_dp.heading()/num::Rad(1) * DERR) * m_rnd();
-	m_p.offsetBy(df, ds);
-
-	m_p.heading().normalize();
-}
-
 void Simul::reqSpeed() //{{{1
 {
+	//cout << "Speed received... " << m_reqSpeed.value.m_linear.mm() << endl;
 }
 
 void Simul::reqShoot() //{{{1
