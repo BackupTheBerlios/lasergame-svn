@@ -1,0 +1,5 @@
+lib odelib : : <name>ode ;
+
+lib components : Geom.cpp World.cpp Body.cpp BoxGeom.cpp SphereGeom.cpp Hinge2Joint.cpp odelib : <link>static ;
+
+
