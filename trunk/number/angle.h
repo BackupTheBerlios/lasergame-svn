@@ -27,8 +27,8 @@ namespace num
 	template <class T, class P> class AngleT //{{{1
 	{
 		T m_data;
-		double m_sin;
-		double m_cos;
+		mutable double m_sin;
+		mutable double m_cos;
 		bool m_valid; ///< Are m_sin and m_cos valid?
 	protected:
 		/// Just copies the param to m_data
@@ -76,6 +76,7 @@ namespace num
 		/// @}
 	
 	public:
+		typedef T type;
 		/// Initializes to zero angle
 		AngleT() : m_data(0), m_valid(false) { }
 		/// Used when comparing for equality
@@ -86,15 +87,15 @@ namespace num
 		/// Sinus of the angle
 		T sin() const { if (!m_valid) updateSinCos(); return m_sin; }
 		/// Updates the caches for sin/cos
-		void updateSinCos()
+		void updateSinCos() const 
 		{
 			m_sin = ::sin(rad()); 
 			m_cos = ::cos(rad()); 
 		}
 		/// Wrapper around the system function
-		static AngleT atan2(const T & y, const T & x)
+		static AngleT atan2(const double & y, const double & x)
 		{
-			return AngleT(::atan2(toDouble(y), toDouble(x)) * P::RAD_MULT()).normalize();
+			return AngleT(::atan2(y, x) * P::RAD_MULT());
 		}
 		
 		double rad() const { return toDouble(m_data/P::RAD_MULT()); }
