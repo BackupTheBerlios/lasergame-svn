@@ -14,6 +14,8 @@
 #include "Body.h"
 #include "Geom.h"
 
+using namespace num;
+
 Body::Body(World* in_pWorld)
 {
 	m_id = dBodyCreate(in_pWorld->getID());
@@ -67,6 +69,13 @@ void Body::getQuaternion(double out_vector[4])
 	out_vector[2] = q[2];
 	out_vector[3] = q[3];
 
+}
+
+Angle Body::getOrientation2D()
+{
+	dVector3 worldVector;
+	dBodyVectorToWorld(m_id, 1, 0, 0, worldVector);
+	return Angle::atan2(worldVector[1], worldVector[0]);
 }
 
 void Body::setQuaternion(dQuaternion in_q)

@@ -9,6 +9,7 @@
 */
 
 #include <ode/ode.h>
+#include "number/angle.h"
 
 class World;
 class Geom;
@@ -25,6 +26,8 @@ class Body
 		void getPosition(double out_vector[3]);
 		void getAngularVelocity(double out_vector[3]);
 		void getQuaternion(double out_vector[4]);
+		/// Returns orientation of unit vector (1,0,0) in body coordinates, as projected to ground plane
+		num::Angle getOrientation2D();
 		void setQuaternion(dQuaternion in_q);
 		void attachGeom(Geom* in_geom);
 		dBodyID id() {return m_id;}
