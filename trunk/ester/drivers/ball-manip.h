@@ -6,10 +6,10 @@
 
 namespace drivers {
 
-class Balls : public Driver
+class BallManip : public Driver
 {
 	public:
-		Balls(const Params& in_params) : Driver(in_params) {}
+		BallManip(const Params& in_params) : Driver(in_params) {}
 		inline const num::Dist BALL_EAT_DIST() { return num::Milim(60); }
 		virtual void main()
 		{

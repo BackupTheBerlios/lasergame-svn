@@ -236,7 +236,7 @@ AUTOTEST(testGP2) //{{{1
 
 AUTOTEST(testBallEating) //{{{1
 {
-	Dir dirA; conf::Robot a("watchdog, ester-speed, pose-change, pose, balls");
+	Dir dirA; conf::Robot a("watchdog, ester-speed, pose-change, pose, ball-manip");
 	Dir dirB; conf::Robot b;
 	Field field;
 	field.setPalm(3,5);
@@ -249,7 +249,7 @@ AUTOTEST(testBallEating) //{{{1
 	watchdog.publish();
 	waitFor(inBalls);
 	
-	// TODO who to test this further?
+	// TODO how to test this further?
 }
 //}}}
 

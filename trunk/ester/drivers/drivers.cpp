@@ -8,7 +8,7 @@
 #include "pose.h"
 #include "floor-color.h"
 #include "gp2top.h"
-#include "balls.h"
+#include "ball-manip.h"
 #include "util/assert.h"
 
 #include <map>
@@ -41,7 +41,7 @@ namespace drivers {
 				r<Pose>("pose");
 				r<GP2Top>("gp2top");
 				r<FloorColor>("floor-color");
-				r<Balls>("balls");
+				r<BallManip>("ball-manip");
 				//r<BallOffset>("ball-offset");
 			}
 	} s_reg;
