@@ -88,6 +88,32 @@ namespace
 		Task cc(B::fac(a, b));
 		waitFor(b);
 	}
+
+	struct CallbackTest : public Runnable //{{{1
+	{
+		Subs<bool, CallbackTest> m_a;
+		bool m_beenHere;
+		CallbackTest(Channel* in_channel) : m_a(in_channel, this, &CallbackTest::handle) {} 
+		virtual void main()
+		{
+			m_a.publish();
+			m_beenHere = false;
+			waitFor(m_a);
+			REQUIRE( m_beenHere == true );
+			m_a.publish();
+		}
+		static FactoryBase* fac(Channel* in_a) { return factory<CallbackTest>(in_a); }
+		void handle() { m_beenHere = true; }
+	};
+
+	AUTOTEST(callback) //{{{1
+	{
+		Subs<bool> a;
+		Task cc(CallbackTest::fac(a));
+		waitFor(a);
+		a.publish();
+		waitFor(a);
+	}
 	//}}}
 }
 

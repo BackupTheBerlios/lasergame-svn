@@ -42,7 +42,7 @@ namespace msg
 			~TaskItem() {}
 			SubsBase* getSubs() { return m_subs; }
 			void destroy() { m_subs->destroy(m_user); m_user = 0; }
-			void assign() { m_subs->assign(m_user); destroy(); }
+			void execute() { m_subs->execute(m_user); destroy(); }
 	};
 
 	struct TaskImplKey : public thread::Key //{{{1
@@ -239,7 +239,7 @@ SubsBase* processSubs() //{{{1
 	if (!t->running())
 		throw stop();
 	SubsBase* ret = t->front().getSubs();
-	t->front().assign();
+	t->front().execute();
 	t->pop_front();
 	return ret;
 	// [4. auto-unlock]

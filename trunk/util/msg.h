@@ -58,7 +58,7 @@ namespace msg
 	class FactoryBase { public: TaskImpl* m_taskImpl; virtual Runnable* create() = 0; };
 
 	// class factories templates {{{1
-	struct UnusedTag {};
+	struct UnusedTag { void func() {} };
 	
 	template <class What, class P1=UnusedTag, class P2=UnusedTag, class P3=UnusedTag, class P4=UnusedTag> //{{{2
 		class Factory : public FactoryBase
@@ -136,7 +136,7 @@ namespace msg
 	}
 	//}}}1
 
-	class Task
+	class Task //{{{1
 	{
 		TaskImpl* m_pimpl;
 		public:
@@ -144,11 +144,11 @@ namespace msg
 			Task(FactoryBase* in_factory);
 			/// waits for its thread to finish
 			~Task();
-	};
+	}; //}}}
 
 	class Channel;
 	class bad_type {};
-	class SubsBase
+	class SubsBase //{{{1
 	{
 		Channel* m_pChannel;
 		TaskImpl& m_taskImpl;
@@ -164,37 +164,69 @@ namespace msg
 			virtual void* create() const = 0;
 			virtual void destroy(void* in_data) const = 0;
 			virtual void checkType(SubsBase*) const = 0;
-			virtual void assign(void*) = 0;
+			virtual void execute(void*) = 0;
 			void publish() const;
 			operator Channel* () { return m_pChannel; }
 			void postItem(void* data);
-	};
+	};//}}}1
 
 	namespace detail {
 		/// Go through the task queue and delete all messages destined to the supplied subs
 		void destroyItemsFor(SubsBase* in_subs);
 	}
 
-	template <class T> class Subs : public SubsBase
+	template <class T> class SubsImpl : public SubsBase
 	{
 		private:
-			Subs(const Subs&) {}
+			SubsImpl(const SubsImpl&) {}
 		public:
 			T value;
-			Subs() { subscribe(); }
-			Subs(Channel* in_parent, const char* in_name) { subscribe(in_parent, in_name); }
-			Subs(Channel* in_pChannel) { subscribe(in_pChannel); }
-			virtual ~Subs() { unsubscribe(); detail::destroyItemsFor(this); }
+			SubsImpl() { subscribe(); }
+			SubsImpl(Channel* in_parent, const char* in_name) { subscribe(in_parent, in_name); }
+			SubsImpl(Channel* in_pChannel) { subscribe(in_pChannel); }
+			virtual ~SubsImpl() { unsubscribe(); detail::destroyItemsFor(this); }
 			virtual void* create() const { return new T(value); }
 			virtual void destroy(void* in_data) const { delete (T*)in_data; }
 			virtual void checkType(SubsBase* in_subs) const
 			{
-				if (dynamic_cast<Subs<T>*>(in_subs) == 0)
+				if (dynamic_cast<SubsImpl<T>*>(in_subs) == 0)
 					throw bad_type();
 			}
-			virtual void assign(void * in_data) { value = *(T*)in_data; }
+	};
+
+	template <class T, class C = UnusedTag> 
+		class Subs : public SubsImpl<T>
+	{
+		public:
+			typedef void (C::*callback)();
+			C* m_obj;
+			const callback m_c;
+		public:
+			Subs(C* in_obj, callback in_c) : m_obj(in_obj), m_c(in_c) { }
+			Subs(Channel* in_parent, const char* in_name, C* in_obj, callback in_c) 
+				: SubsImpl<T>(in_parent, in_name), m_obj(in_obj), m_c(in_c)
+			{ 
+			}
+			Subs(Channel* in_pChannel, C* in_obj, callback in_c) 
+				: SubsImpl<T>(in_pChannel), m_obj(in_obj), m_c(in_c) 
+			{ 
+			}
+			virtual void execute(void * in_data) 
+			{ 
+				value = *(T*)in_data; 
+				(m_obj->*m_c)();
+			}
 	};
 	
+	template <class T> class Subs<T, UnusedTag>	: public SubsImpl<T>
+	{
+		public:
+			Subs() { }
+			Subs(Channel* in_parent, const char* in_name) : SubsImpl<T>(in_parent, in_name){ }
+			Subs(Channel* in_pChannel) : SubsImpl<T>(in_pChannel) { }
+			virtual void execute(void * in_data) { value = *(T*)in_data; }
+	};
+
 	SubsBase* processSubs();
 	void waitFor(SubsBase& in_subs);
 }
