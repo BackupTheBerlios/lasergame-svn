@@ -26,8 +26,8 @@ AUTOTEST(testConstruct) //{{{1
 	REQUIRE( p.y().eq(Milim(200)) );
 	REQUIRE( p.heading().eq(Deg(90)) );
 
-	Pose p1;
-	p1.set(p, Rnd(), Milim(100), Deg(10));
+	Pose p1; Rnd rnd;
+	p1.set(p, rnd, Milim(100), Deg(10));
 	REQUIRE( p1.x().eq(Milim(200), Milim(100)) );
 	REQUIRE( p1.y().eq(Milim(200), Milim(100)) );
 	REQUIRE( p1.heading().eq(Deg(90), Deg(10)) );
