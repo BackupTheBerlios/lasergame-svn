@@ -138,14 +138,6 @@ namespace msg
 	}
 	//}}}1
 
-#ifndef JOIN
-#	define JOIN( X, Y ) DO_JOIN( X, Y )
-#	define DO_JOIN( X, Y ) DO_JOIN2(X,Y)
-#	define DO_JOIN2( X, Y ) X##Y
-#endif
-
-#	define TASK(a,b) Task JOIN(unique,__LINE__)(factory<a> b)
-
 	class Task
 	{
 		thread::id_t m_id;
@@ -180,6 +172,8 @@ namespace msg
 			operator Channel* () { return m_pChannel; }
 	};
 
+	template <class T> class Subs;
+
 	template <class T> class Wrapped : public WrappedBase
 	{
 		T m_data;
@@ -187,19 +181,22 @@ namespace msg
 			Wrapped(const T& in_data) : m_data(in_data) {}
 			void assignTo(SubsBase* in_subs) const
 			{
-				*dynamic_cast<T*>(in_subs) = m_data;
+				(dynamic_cast< Subs<T>* >(in_subs))->value = m_data;
 			}
 	};
 
-	template <class T> class Subs : public SubsBase, public T
+	template <class T> class Subs : public SubsBase
 	{
+		private:
+			Subs(const Subs&) {}
 		public:
+			T value;
 			Subs() {}
 			Subs(const char* in_name) : SubsBase(in_name) {}
 			Subs(Channel* in_pChannel) : SubsBase(in_pChannel) {}
 			virtual WrappedBase* createWrapped() const
 			{
-				return new Wrapped<T>(*this);
+				return new Wrapped<T>(value);
 			}
 	};
 	
