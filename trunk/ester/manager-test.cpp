@@ -251,38 +251,36 @@ AUTOTEST(testBallEating) //{{{1
 	
 	// TODO how to test this further?
 }
-//}}}
 
-#if 0
 AUTOTEST(testCamera) //{{{1
 {
-	Subs<int> dir(0);
-	Subs<Time> dt(dir, "time-change");
-	Subs<int> watchdog(dir, "watchdog");
-	Subs<Point> ball(dir, "ball");
-	Subs<Speed> req(dir, "speed-requested");
-	
+	Dir dirA; conf::Robot a("watchdog, ester-speed, pose-change, pose, ball-detect");
+	Dir dirB; conf::Robot b;
 	Field field;
-	Task e(new Simul(dir, &field, 0));
-	waitFor(dt);         // wait until simulator is ready
+	field.setPalm(3,5);
+	Task e(new Manager(field, a, b, dirA, dirB));
+
+	//Subs<Time> dt(dir, "time-change");
+	Subs<bool> watchdog(dirA, "watchdog");
+	Subs<Point> ballOffset(dirA, "ball-offset");
+	Subs<Speed> req(dirA, "speed-requested");
+
+	waitFor(ballOffset);// wait until simulator is ready
 	
-	for (int i = 0; i < 20; i++)
-	{	
-		watchdog.publish();  // step forward
-		waitFor(dt);
-	}
 	req.value.m_angular = AngularSpeed(Deg(-180));
 	req.publish();
 	for (int i = 0; i < 55; i++)
 	{
 		watchdog.publish();  // step forward
-		waitFor(dt);
+		waitFor(ballOffset);
 		//cout << ball.m_off.n() << endl;
 	}
-	REQUIRE( ball.value.x().eq(Milim(560), Milim(20)) );
-	REQUIRE( ball.value.y().eq(Dist(), Milim(20)) );
+	REQUIRE( ballOffset.value.x().eq(Milim(560), Milim(20)) );
+	REQUIRE( ballOffset.value.y().eq(Dist(), Milim(20)) );
 }
+//}}}
 
+#if 0
 AUTOTEST(testEnemy) //{{{1
 {
 	Subs<int> dir(0);

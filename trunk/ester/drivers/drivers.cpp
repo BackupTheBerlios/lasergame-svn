@@ -9,6 +9,7 @@
 #include "floor-color.h"
 #include "gp2top.h"
 #include "ball-manip.h"
+#include "ball-detect.h"
 #include "util/assert.h"
 
 #include <map>
@@ -42,7 +43,7 @@ namespace drivers {
 				r<GP2Top>("gp2top");
 				r<FloorColor>("floor-color");
 				r<BallManip>("ball-manip");
-				//r<BallOffset>("ball-offset");
+				r<BallDetect>("ball-detect");
 			}
 	} s_reg;
 	
