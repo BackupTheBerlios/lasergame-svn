@@ -1,5 +1,8 @@
+// $Id$
+// Copyright (C) 2004, Zbynek Winkler
+
 #include "simul.h"
-//#include "util/measures.h"
+#include "measures.h" // INITIAL()
 #include "util/assert.h"
 
 #include <ctime>
@@ -70,11 +73,9 @@ static void updateSpeed(num::Speed & in_old, const num::Speed & in_req, const nu
 		in_old.m_angular += AngularSpeed(Deg(1000) * (in_dt/Sec(1)));
 }
 
-void updatePoseChange(Pose & in_dp, const Speed & in_speed, const Time & in_dt) //{{{1
+Pose calcPoseChange(const Speed & in_speed, const Time & in_dt) //{{{1
 {
-	in_dp.x() = in_speed.m_linear * in_dt;
-	in_dp.y() = Milim(0);
-	in_dp.heading() = in_speed.m_angular * in_dt;
+	return Pose(in_speed.m_linear * in_dt, Dist(), in_speed.m_angular * in_dt);
 }
 
 void updatePose(Pose & in_p, const Pose & in_dp, const Angle::type& AERR, const Dist::type& FERR, const Angle::type& DERR, Rnd & in_rnd) //{{{1
@@ -93,6 +94,18 @@ void updateFloorColor(FloorColor & in_floor, const Pose & in_frame, int in_side)
 {
 	for (int i = 0; i < in_floor.N_ITEM; i++)
 		in_floor[i].m_color = measures::getColor(in_frame.transform(in_floor[i]), in_side);
+}
+
+double calcGP2top(const Field& in_field, const Pose & in_pose) //{{{1
+{
+	Dist p1 = in_field.palm1Dist(in_pose.point());
+	Dist p2 = in_field.palm2Dist(in_pose.point());
+	Dist closer = min(p1, p2);
+
+	if (closer < MAX_GP_DISTANCE())
+		return MAX_GP_DISTANCE()/GP_UNIT_DIST() - closer/GP_UNIT_DIST();
+	else
+		return 0;
 }
 //}}}
 }
@@ -119,7 +132,7 @@ Simul::Simul(msg::Channel* in_p, Field& in_field, int in_side) //{{{1
 	//m_seed.value = time(NULL);
 	m_seed.value = 1;
 	m_timeChange.value = num::MSec(5);
-	m_pose.value  = num::Pose(); //INITIAL();
+	m_pose.value  = measures::INITIAL();
 	m_start.value = true;
 	m_numBallsIn.value = 0;
 	m_rnd.setSeed(m_seed.value);
@@ -152,7 +165,7 @@ void Simul::main() //{{{1
 		updateSpeed(m_currentSpeed.value, m_reqSpeed.value, m_timeChange.value);
 		m_currentSpeed.publish();
 		
-		updatePoseChange(m_poseChange.value, m_currentSpeed.value, m_timeChange.value);
+		m_poseChange.value = calcPoseChange(m_currentSpeed.value, m_timeChange.value);
 		m_poseChange.publish();
 		
 		updatePose(m_pose.value, m_poseChange.value, AERR, FERR, DERR, m_rnd);
@@ -161,9 +174,9 @@ void Simul::main() //{{{1
 		updateFloorColor(m_floorColor.value, m_pose.value, m_side);
 		m_floorColor.publish();
 		
-		//upGP2(m_gp2top.value, m_field, m_pose.value);
-		//m_gp2top.publish();
-		//
+		m_gp2top.value = calcGP2top(m_field, m_pose.value);
+		m_gp2top.publish();
+		
 		//upBalls();
 		//upCamera();
 		//upEnemy();
@@ -191,20 +204,6 @@ void Simul::reqShoot() //{{{1
 }
 
 #if 0
-void EsterSimul::upGP2() //{{{1
-{
-	using num::Dist;
-	Dist p1 = m_palmPosition1.distanceTo(m_pose.m_pose);
-	Dist p2 = m_palmPosition2.distanceTo(m_pose.m_pose);
-	Dist& closer = (p1 < p2 ? p1 : p2);
-
-	m_gp2top.m_time = m_timeChange.m_time;
-	if (closer < MAX_GP_DISTANCE())
-		m_gp2top.m_num = MAX_GP_DISTANCE()/GP_UNIT_DIST() - closer/GP_UNIT_DIST();
-	else
-		m_gp2top.m_num = 0;
-}
-
 void EsterSimul::upBalls() //{{{1
 {
 	using num::Dist;

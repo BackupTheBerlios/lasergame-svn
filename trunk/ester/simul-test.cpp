@@ -148,6 +148,44 @@ AUTOTEST(testFloorColor) //{{{1
 	
 	// TODO who to test this further?
 }
+
+AUTOTEST(testGP2) //{{{1
+{
+	Subs<int> dir;
+	Subs<Time> dt(dir, "time-change");
+	Subs<int> watchdog(dir, "watchdog");
+	Subs<Speed> req(dir, "speed-requested");
+	Subs<Pose> pose(dir, "true-pose");
+	Subs<double> gp2(dir, "gp2top");
+
+	Field field;
+	field.setPalm(3,5);
+	Task e(Simul::fac(dir, field, 0));
+	waitFor(dt);         // wait until simulator is ready
+	
+	double max = 0;
+	Dist x;
+	Time t = Sec(3);
+	req.value.m_linear = Meter(1);
+	req.publish();
+	while( t.gt() )
+	{
+		t -= dt.value;
+		if (gp2.value > max)
+		{
+			max = gp2.value;
+			x = pose.value.x();
+		}
+
+		//cout << t.ms() << ": " << pose.value.x().mm() << " = " << gp2.value << endl;
+		watchdog.publish();  // make step
+		waitFor(dt);         // wait for simulator
+	}
+
+	//cout << x;
+	REQUIRE( x < Milim(910) && x > Milim(890)  );
+}
+
 //}}}
 
 #if 0
@@ -183,57 +221,6 @@ AUTOTEST(testTruePose) //{{{2
 {
 	EsterSimul t2;
 	TestTruePose t3;
-	g_main.waitForAny();
-}
-//}}}
-
-
-//}}}
-
-//{{{1 testGP2()
-struct TestGP2 : public Action //{{{2
-{
-	virtual int main()
-	{
-		using namespace num;
-		msg::Speed requestedSpeed;
-		Regs r1("cz.robotika.ester.requested_speed", &requestedSpeed);
-		msg::TimeChange dt;
-		msg::Pose pose;
-		msg::Number gp2;
-		Subs s1("time_change", &dt);
-		Subs s2("cz.robotika.ester.true_pose", &pose);
-		Subs s3("cz.robotika.ester.gp2.top", &gp2);
-		Number m_max = 0;
-		Dist m_x;
-		execute();		
-
-		Time t = Sec(3);
-		requestedSpeed.m_time = dt.m_time;
-		requestedSpeed.m_v = Meter(1);
-		while( t.gt() )
-		{
-			t -= dt.m_dt;
-			if (gp2.m_num > m_max)
-			{
-				m_max = gp2.m_num;
-				m_x = pose.m_pose.x();
-			}
-
-			//cout << t.ms() << ": " << pose.m_pose.x().mm() << " = " << toDouble(gp2.m_num) << endl;
-			execute();
-		}
-
-		ASSERT( m_x < Milim(910) && m_x > Milim(890)  );
-		return 0;
-	}
-};
-
-AUTOTEST(testGP2) //{{{2
-{
-	EsterSimul t2(0);
-	t2.setPalm(3,5);
-	TestGP2 t3;
 	g_main.waitForAny();
 }
 //}}}

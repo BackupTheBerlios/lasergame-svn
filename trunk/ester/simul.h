@@ -62,7 +62,6 @@ class Simul : public msg::Runnable
 		void reqShoot();
 
 #if 0
-	void upGP2();
 	void upBalls();
 	void upCamera();
 	void upEnemy();
