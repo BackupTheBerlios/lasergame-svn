@@ -14,9 +14,8 @@
  * Subs::publish() method that posts TaskItems to the task queues of the subscriptions
  * initialized to the same name.
  *
- * All manipulation with any data that could possibly be shared is guarded by a single
- * lock s_lock available only for this and only file. Helper class Locker is provided
- * to automaticaly lock and unlock this lock. Only Task queues have their own locks.
+ * All manipulation with channels and subscriptions is guarded by a single
+ * lock s_allSubs. Task queues have their own locks.
  * 
  */
 
@@ -29,7 +28,6 @@
 
 namespace msg 
 { 
-	class SubsList : public std::list<SubsBase*> { }; 
 	class TaskItem //{{{1
 	{
 		protected:
@@ -70,24 +68,22 @@ namespace msg
 namespace 
 {
 	using namespace msg;
+	using namespace thread;
 
 	TaskImpl s_main;
 	
-	class AllSubs : public thread::Lock, public std::map< std::string, SubsList > //{{{1
-	{ } s_allSubs;
-	
-	class Locker : public thread::Locker //{{{1
+	class AllSubs : public thread::Lock, public std::map< std::string, Channel* > //{{{1
 	{
 		public:
-			Locker() : thread::Locker(s_allSubs) {}
-	};
-
+			Channel* getChannel(const char* in_name);
+	} s_allSubs;
+	
 	TaskItem getItem() //{{{1
 	{
 		// 1. find current thread and associated queue
 		TaskImpl* t = s_impl();
 		// 2. lock it
-		thread::Locker lock(*t);
+		Locker lock(*t);
 		// 3. pop and return the item
 		while (t->empty())
 			t->wait();
@@ -102,14 +98,17 @@ namespace
 		// 1. find current thread and associated queue
 		TaskImpl* t = s_impl();
 		// 2. lock it
-		thread::Locker lock(*t);
+		Locker lock(*t);
 		// 3. loop through all and erase & delete items for in_subs (use TaskItemBase::isFor(SubsBase))
 		for (TaskImpl::iterator i = t->begin(); i != t->end(); ++i)
 		{
 			if (i->isFor(in_subs))
 			{
-				i->destroy();
-				t->erase(i);
+				TaskImpl::iterator to_del = i;
+				i++;
+				to_del->destroy();
+				t->erase(to_del);
+				i--;
 			}
 		}
 		// [4. auto-unlock]
@@ -132,31 +131,59 @@ namespace
 }
 
 namespace msg {
+	
+	class Channel : public std::list<SubsBase*> //{{{1
+	{
+		public:
+			AllSubs::iterator m_self;
+			Channel() : m_self(0) {}
+	};
 
 void SubsBase::publish() const //{{{1
 {
-	Locker lock;
-	for (std::list<msg::SubsBase*>::iterator i = m_subList.begin(); i != m_subList.end(); i++)
+	Locker lock(s_allSubs);
+	for (std::list<msg::SubsBase*>::iterator i = m_pChannel->begin(); i != m_pChannel->end(); i++)
 	{
 		if (*i != this)
 			(*i)->m_taskImpl.push_back_locked(*i, createWrapped()); // thread safe
 	}
 }
 
-SubsBase::SubsBase(const char * in_name) : m_subList(s_allSubs[in_name]), m_taskImpl(*s_impl()) //{{{1
+SubsBase::SubsBase() : m_pChannel(new Channel()), m_taskImpl(*s_impl()) //{{{1
 {
-	Locker lock;
-	// 1. register this subs
-	m_subList.push_back(this);
+	// no need to lock since nobody else has access to this newly created channel
+	m_pChannel->push_back(this);
 }
+
+SubsBase::SubsBase(const char * in_name) : m_pChannel(s_allSubs.getChannel(in_name)), m_taskImpl(*s_impl()) //{{{1
+{
+	Locker lock(s_allSubs);
+	// 1. register this subs
+	m_pChannel->push_back(this);
+}
+
+SubsBase::SubsBase(Channel* in_pChannel) : m_pChannel(in_pChannel), m_taskImpl(*s_impl()) //{{{1
+{
+	Locker lock(s_allSubs);
+	// 1. register this subs
+	m_pChannel->push_back(this);
+}
+
 
 SubsBase::~SubsBase() //{{{1
 {
-	Locker lock;
-	// 1. deregister this subs
-	m_subList.erase(std::find(m_subList.begin(), m_subList.end(), this));
-	// 2. if this was the last subs under the group, delete it
-	// TODO
+	{
+		Locker lock(s_allSubs);
+		// 1. deregister this subs
+		m_pChannel->erase(std::find(m_pChannel->begin(), m_pChannel->end(), this));
+		// 2. if this was the last subs under the group, delete it
+		if (m_pChannel->empty())
+		{
+			if (m_pChannel->m_self != AllSubs::iterator(0))
+				s_allSubs.erase(m_pChannel->m_self);
+			delete m_pChannel;
+		}
+	}
 	// 3. go through the task queue and delete all messages destined to this subs
 	destroyItemsFor(this);
 }
@@ -169,7 +196,6 @@ void wait() //{{{1
 	item.assign();   
 }
 //}}}
-
 
 Task::Task(HelperBase* in_helper) //{{{1
 {
@@ -184,3 +210,16 @@ Task::~Task() //{{{1
 //}}}
 } // namespace msg
 
+namespace
+{
+	Channel* AllSubs::getChannel(const char* in_name) //{{{1
+	{
+		iterator ret = lower_bound(in_name);
+		if (ret == end() || (*ret).first != in_name)
+		{
+			ret = insert(ret, value_type(in_name, new Channel()));
+			(*ret).second->m_self = ret;
+		}
+		return ret->second;
+	}	//}}}
+}

@@ -1,6 +1,5 @@
 #include <iostream>
 #include "util/unit-test.h"
-#include "util/osdep.h"
 #include "msg/msg.h"
 using namespace std;
 
@@ -51,16 +50,31 @@ namespace
 	
 	AUTOTEST(subTask) //{{{1
 	{
-		//Channel<Int> q;
-		//NamedChannel<Int> nq("quit");
-		//Subs<Int> s(q);
 		//Task t(helper(&goDist, 1));
-		// Task t(helper(&monitor, "quit"));
-		// Subs<Int> q("quit");
 		// wait(q);
 		Task a(new Helper<TestRun, int>(1));
 		Task b(helper<TestRun>(2));
 		TASK(TestRun, 3);
+	}
+	
+	struct Bool { bool m_bool; }; //{{{1
+
+	class A : public Runnable //{{{1
+	{
+		public:
+			Subs<Bool> m_quit;
+			A(Channel* in_pChannel) : m_quit(in_pChannel) {}
+			virtual void main() 
+			{ 
+				m_quit.m_bool = true; 
+				m_quit.publish(); 
+			}
+	};
+	
+	AUTOTEST(channel) //{{{1
+	{
+		Subs<Bool> quit;
+		TASK(A, quit.getChannel());
 	}
 	//}}}
 }

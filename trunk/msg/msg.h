@@ -17,7 +17,7 @@ namespace msg
 	/// Class for a computational context (can accept messages)
 	class TaskImpl;
 	
-	class Runnable { public: virtual void main() = 0; };
+	class Runnable { public: virtual void main() = 0; virtual ~Runnable() {} };
 	
 	class HelperBase { public: virtual Runnable* create() = 0; };
 
@@ -25,11 +25,11 @@ namespace msg
 	{
 		Par1 m_par1;
 		public:
-			Helper(const Par1& in_par1) : m_par1(in_par1) {}
+			Helper(const Par1 in_par1) : m_par1(in_par1) {}
 			virtual Runnable* create() { return new What(m_par1); }
 	};
 
-	template <class What, class Par1> HelperBase* helper(const Par1& in_par1)
+	template <class What, class Par1> HelperBase* helper(const Par1 in_par1)
 	{
 		return new Helper<What, Par1>(in_par1);
 	}
@@ -58,14 +58,17 @@ namespace msg
 		public: virtual void assignTo(SubsBase* in_subs) const = 0;
 	};
 
-	class SubsList;
+	class Channel;
 	
 	class SubsBase
 	{
-		SubsList& m_subList;
+		Channel* m_pChannel;
 		TaskImpl& m_taskImpl;
 		public:
+			SubsBase();
 			SubsBase(const char* in_name);
+			SubsBase(Channel* in_pChannel);
+			Channel* getChannel() { return m_pChannel; }
 			virtual ~SubsBase();
 			virtual WrappedBase* createWrapped() const = 0;
 			void publish() const;
@@ -85,7 +88,9 @@ namespace msg
 	template <class T> class Subs : public SubsBase, public T
 	{
 		public:
+			Subs() {}
 			Subs(const char* in_name) : SubsBase(in_name) {}
+			Subs(Channel* in_pChannel) : SubsBase(in_pChannel) {}
 			virtual WrappedBase* createWrapped() const
 			{
 				return new Wrapped<T>(*this);
