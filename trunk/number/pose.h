@@ -15,7 +15,7 @@
 #include <ios>
 #include "dist.h"
 #include "angle.h"
-#include "Rnd.h"
+#include "rnd.h"
 
 #ifndef DOXYGEN_SKIP
 #define DOXYGEN_SKIP(X) X

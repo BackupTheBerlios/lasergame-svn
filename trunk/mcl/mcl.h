@@ -10,7 +10,7 @@
 */
 #include <ostream>
 #include <vector>
-#include "number/Pose.h"
+#include "number/pose.h"
 
 namespace mcl 
 {
