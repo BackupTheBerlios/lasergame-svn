@@ -3,6 +3,7 @@
 
 #include "number/speed.h"
 #include "../ode-robot.h"
+#include "../ContactData.h"
 
 class dBody;
 class dBox;
@@ -24,6 +25,8 @@ class FourWheeler : public OdeRobot
 		dHinge2Joint* m_joints;
 		dBody* m_wheels;
 		dSphere* m_wheelGeoms;
+		ContactData m_chassisContact;
+		ContactData m_wheelContact;
 
 };
 

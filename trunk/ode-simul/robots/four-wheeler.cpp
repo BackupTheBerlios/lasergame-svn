@@ -50,10 +50,13 @@ void FourWheeler::create(dWorld* in_world, dSpace* in_space, Pose in_pose)
 
 	m_pChassisBox = new dBox(in_space->id(), ROBOT_LENGTH().m(),ROBOT_WIDTH().m(),ROBOT_HEIGHT().m());
 	m_pChassisBox->setBody(m_pChassis->id());
+	m_chassisContact.mu = 0.5;
+	m_pChassisBox->setData(&m_chassisContact);
 
 	m_wheels = new dBody[4];
 	m_wheelGeoms = new dSphere[4];
 
+	m_wheelContact.mu = 20;
 	for (int i = 0; i < 4; i++)
 	{
 		m_wheels[i].create(in_world->id());
@@ -65,6 +68,7 @@ void FourWheeler::create(dWorld* in_world, dSpace* in_space, Pose in_pose)
 		m_wheels[i].setMass(&mass);
 		m_wheelGeoms[i].create(in_space->id(),RADIUS().m());
 		m_wheelGeoms[i].setBody(m_wheels[i].id());
+		m_wheelGeoms[i].setData(&m_wheelContact);
 	}
 	m_wheels[0].setPosition(in_pose.x().m()+0.4*ROBOT_LENGTH().m()-0.5*RADIUS().m(), 
 	                      in_pose.y().m()+0.5*ROBOT_WIDTH().m(),STARTZ().m()-0.5*ROBOT_HEIGHT().m());

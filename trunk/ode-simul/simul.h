@@ -15,6 +15,7 @@
 #include "number/pose.h"
 #include "number/speed.h"
 #include "ode-robot.h"
+#include "ContactData.h"
 
 class dWorld;
 class dSpace;
@@ -37,6 +38,7 @@ class OdeSimul : public msg::Runnable
 		dJointGroup* m_pContactGroup;
 		dPlane* m_pGround;
 		OdeRobot* m_pRobot;
+		ContactData m_groundCD;
 		
 };
 

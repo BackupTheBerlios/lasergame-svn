@@ -35,25 +35,36 @@ namespace {
 		if (b1 && b2 && dAreConnected(b1, b2))
 			return;
 
-		//std::cout<<"Colliding"<<std::endl;
-		const int N = 4;
-		dContact contact[N];
-		n = dCollide (o1,o2,N,&contact[0].geom,sizeof(dContact));
-		if (n > 0) {
-			for (i=0; i<n; i++) {
-				contact[i].surface.mode = dContactSlip1 | dContactSlip2 | dContactSoftERP | dContactSoftCFM | dContactApprox1;
-				if (dGeomGetClass(o1) == dSphereClass || dGeomGetClass(o2) == dSphereClass)
-					contact[i].surface.mu = 20;
-				else
-					contact[i].surface.mu = 0.5;
-				contact[i].surface.slip1 = 0.0;
-				contact[i].surface.slip2 = 0.0;
-				contact[i].surface.soft_erp = 0.8;
-				contact[i].surface.soft_cfm = 0.01;
-				dJointID c = dJointCreateContact (pCD->pWorld->id(),pCD->pContactGroup->id(),contact+i);
-				dJointAttach (c,dGeomGetBody(o1),dGeomGetBody(o2));
+    if (dGeomIsSpace (o1) || dGeomIsSpace (o2)) {
+      // colliding a space with something
+      dSpaceCollide2 (o1,o2,data,&nearCallback);
+    }
+    else {
+      // colliding two non-space geoms, so generate contact
+      // points between o1 and o2
+			//std::cout<<"Colliding"<<std::endl;
+			const int N = 10;
+			dContact contact[N];
+			n = dCollide (o1,o2,N,&contact[0].geom,sizeof(dContact));
+			ContactData *cd1;
+			ContactData *cd2;
+			cd1 = (ContactData*) dGeomGetData(o1);
+			cd2 = (ContactData*) dGeomGetData(o2);
+			//cout << "cd1->mu is: " << cd1->mu << "cd2->mu is: " << cd2->mu << endl;
+			double mu = (cd1->mu < cd2->mu ? cd1->mu : cd2->mu);
+
+      // add these contact points to the simulation
+			if (n > 0) {
+				for (i=0; i<n; i++) {
+				  contact[i].surface.mode = dContactSoftERP | dContactSoftCFM | dContactApprox1;
+					contact[i].surface.mu = mu;
+					contact[i].surface.soft_erp = 0.8;
+					contact[i].surface.soft_cfm = 0.01;
+					dJointID c = dJointCreateContact (pCD->pWorld->id(),pCD->pContactGroup->id(),contact+i);
+					dJointAttach (c,dGeomGetBody(o1),dGeomGetBody(o2));
+				}
 			}
-		}
+    }
 	}
 
 };
@@ -67,6 +78,7 @@ OdeSimul::OdeSimul(msg::Channel* in_pChannel) : m_pChannel(in_pChannel)
 
 	//create ground
 	m_pGround = new dPlane(m_pSpace->id(),0,0,1,0);
+	m_pGround->setData(&m_groundCD);
 
 }
 
