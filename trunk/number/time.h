@@ -88,6 +88,10 @@ public:
 		m_time -= a_time.m_time;
 		return *this;
 	}
+	double operator / (const Time& a_time) const
+	{
+		return m_time/a_time.m_time;
+	}
 	//}}}
 };
 
@@ -105,6 +109,7 @@ class Sec : public MSec //{{{1
 	public:
 		/// Passes the in_msec to Time(const int32_t&)
 		Sec(const int & in_sec) : MSec(in_sec*1000) { }
+		Sec(const double & in_sec) : MSec(int(in_sec*1000)) { }
 };
 
 ///
@@ -115,12 +120,6 @@ public:
 };
 //}}}
 
-#if 0
-Number operator / (const Time& a_time) const
-	{
-		return Number(m_time, a_time.m_time);
-	}
-#endif
 }
 
 #endif
