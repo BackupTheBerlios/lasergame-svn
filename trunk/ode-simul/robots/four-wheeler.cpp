@@ -120,13 +120,10 @@ Pose calcPoseChange(const Speed & in_speed, const Time & in_dt) //{{{1
 
 void FourWheeler::update(const Time& in_timeChange)
 {
-	double pos[3], quaternion[4]; 
+	double pos[3]; 
 	m_pChassis->getPosition(pos);
-	m_pChassis->getQuaternion(quaternion);
-	std::cout << "Robot position: " << pos[0] << "," << pos[1] << "," << pos[2] << std::endl;
-	std::cout << "Current quaternion: " << quaternion[0] << "," << quaternion[1] << "," << quaternion[2] 
-		        <<"," << quaternion[3] << std::endl;
-	std::cout << "Current orientation: " << Rad(acos(quaternion[0]) * 2 * (quaternion[3] > 0 ? 1 : -1)).deg() << std::endl;
+	std::cout << "Robot position and orientation: " << pos[0] << "," << pos[1] << "," << pos[2] << " -> "
+		<< m_pChassis->getOrientation2D().deg() << std::endl;
 	double speedR = ((m_reqSpeed.value.m_angular.rad() * ROBOT_WIDTH().m())/2 +  m_reqSpeed.value.m_forward.m());
 	double speedL = (2 * m_reqSpeed.value.m_forward.m() - speedR);
 	std::cout << "Setting speeds: R=" << speedR << " L=" << speedL << std::endl;
