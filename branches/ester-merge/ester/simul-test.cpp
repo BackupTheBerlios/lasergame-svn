@@ -5,49 +5,28 @@ using namespace std;
 #include "util/assert.h"
 #include "util/unit-test.h"
 using namespace num;
+using namespace msg;
 
-#if 0
 namespace {
-//{{{1 testTime()
-struct TimeTest : public Action                                                     //{{{2
+
+AUTOTEST(testTime) //{{{1
 {
-	virtual int main()
+	Subs<int> dir;
+	Subs<Time> dt(dir, "time-change");
+	Subs<int> watchdog(dir, "watchdog");
+	//Simul e(dir, field, model, 0);
+	int i = 0;
+	for ( ; i < 10; i++)
 	{
-		msg::TimeChange dt, odt;
-		Subs s1("time_change", &dt);
-		msg::PoseChange dpose;
-		Subs s2("cz.robotika.ester.pose_change", &dpose);
-		msg::Speed currentSpeed, requestedSpeed;
-		Subs s3("cz.robotika.ester.current_speed", &currentSpeed);
-
-		execute();
-		while (true)
-		{
-			odt = dt;
-			execute();
-			// check times
-			ASSERT( dt.m_dt == num::MSec(5) );
-			ASSERT( dt.m_time == odt.m_time + dt.m_dt );
-			ASSERT( dt.m_time == dpose.m_time && dt.m_time == currentSpeed.m_time);
-			// check speed
-			ASSERT( currentSpeed.m_v == num::FSpeed() );
-			ASSERT( currentSpeed.m_omega == num::ASpeed() );
-			// check poseChange
-			ASSERT( dpose.m_dp == num::PoseChange() );
-		}
-		return 0;
+		watchdog.publish();
+		waitFor(dt);
+		REQUIRE( dt.value == MSec(5) );
 	}
-};
-
-AUTOTEST(testTime)                                                     //{{{2
-{
-	Counter c(50);
-	EsterSimul e;
-	TimeTest s;
-	g_main.waitForAny();
+	REQUIRE( i == 9 );
 }
 //}}}
 
+#if 0
 //{{{1 testFSpeed()
 struct TestFSpeed : public Action //{{{2
 {
@@ -316,5 +295,6 @@ AUTOTEST(testCamera) //{{{2
 	g_main.waitForAny();
 }
 //}}}1
-} // namespace
 #endif
+} // namespace
+
