@@ -16,6 +16,12 @@
 
 namespace num {
 
+template <typename T>
+struct IntOutput //{{{2
+{
+	const T& m_p;
+	IntOutput(const T& p) : m_p(p) {}
+};
 template <class T> class PointT //{{{1
 {
 public:
@@ -33,12 +39,7 @@ public:
 	DistT<T> & y() { return m_y; }
 	/// @}
 	
-	struct IntOutput //{{{2 
-	{
-		const PointT<T>& m_p;
-		IntOutput(const PointT<T>& p) : m_p(p) {}
-	};
-	IntOutput n() const { return IntOutput(*this); }
+	IntOutput<PointT<T> > n() const { return IntOutput<PointT<T> >(*this); }
 
 	/// Equality operator uses equality operators of dist
 	bool operator == (const PointT & in_pos) const //{{{2
@@ -128,12 +129,7 @@ public:
 	DistT<T> & y() { return m_point.y(); }
 	/// @}
 
-	struct IntOutput //{{{2
-	{
-		const PoseT& m_p;
-		IntOutput(const PoseT& p) : m_p(p) {}
-	};
-	IntOutput n() const { return IntOutput(*this); }
+	IntOutput<PoseT<T> > n() const { return IntOutput<PoseT<T> >(*this); }
 
 	/// Generic setter for all values
 	void set(const DistT<T> & in_x, const DistT<T> & in_y, const Angle & in_heading) //{{{2
@@ -238,16 +234,16 @@ template <class T> inline std::ostream& operator << (std::ostream & o, const Poi
 	//return o << setfill(' ') << right << setw(5) << p.x().mm() << ", " << setw(5) << p.y().mm();
 }
 
-template <class T> inline std::ostream& operator << (std::ostream & o, const typename PointT<T>::IntOutput& ip) //{{{1
+template <class T> inline std::ostream& operator << (std::ostream&  o, const IntOutput< PointT<T> >& ip)
 {
 	using namespace std;
 	const PointT<T>& p(ip.m_p);
 	return o << setfill(' ') << right << setw(5) << p.x().mm() << ", " << setw(5) << p.y().mm();
 }
 
-template <class T> inline std::ostream& operator << (std::ostream & o, const typename PoseT<T>::IntOutput& ip) //{{{1
+template <class T> inline std::ostream& operator << (std::ostream & o, const IntOutput< PoseT<T> >& ip) //{{{1
 {
-	return o << ip.m_p->m_point << ", " << std::setw(4) << ip.m_p.heading().deg();
+	return o << ip.m_p.point().n() << ", " << std::setw(4) << ip.m_p.heading().deg();
 }
 
 //{{{1 cmp{X,Y,Heading} ///////////////////////////////////////
