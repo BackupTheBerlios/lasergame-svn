@@ -10,7 +10,8 @@ libs = /util//thread /util//msg ;
 
 unit-test measures-test : measures-test.cpp ;
 unit-test field-test : field-test.cpp field.cpp ;
-unit-test simul-test : simul-test.cpp simul.cpp field.cpp $(libs) : <dependency>field-test ;
+unit-test simul-test : simul-test.cpp simul.cpp field.cpp $(libs) ;
+
 #my-test move-test : MoveTest.cpp Move EsterSimul $(libs) ;
 #my-test ball-scan-test : BallScanTest.cpp EsterSimul Move $(libs) ;
 #my-test mcl-test : MCLTest.cpp /mcl//mcl MCL Move EsterSimul $(libs) ;
