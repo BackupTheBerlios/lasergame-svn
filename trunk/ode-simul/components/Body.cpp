@@ -20,14 +20,17 @@ Body::Body(World* in_pWorld)
 
 Body::~Body()
 {
-	if (m_geom)
-		delete m_geom;
+	delete m_geom;
 	if (m_id)
 		dBodyDestroy(m_id);
 }
 
 void Body::create(World* in_pWorld)
 {
+	delete m_geom;
+	m_geom = 0;
+	if (m_id)
+		dBodyDestroy(m_id);
 	m_id = dBodyCreate(in_pWorld->getID());
 }
 

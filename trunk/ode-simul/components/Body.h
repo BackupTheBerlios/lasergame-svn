@@ -16,7 +16,7 @@ class Geom;
 class Body
 {
 	public:
-		Body() : m_id(0) {}
+		Body() : m_id(0), m_geom(0) {}
 		Body(World* p_world);
 		~Body();
 		void create(World* in_world);
