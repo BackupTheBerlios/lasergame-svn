@@ -17,7 +17,7 @@ namespace {
 	num::Pose INITIAL_POSITION() { return Pose(Milim(0), Milim(0), Deg(0)); }
 };
 
-OdeSimul::OdeSimul(msg::Channel* in_pChannel) : m_pChannel(in_pChannel) 
+OdeSimul::OdeSimul(msg::Channel* in_pChannel) : m_pChannel(in_pChannel) , m_pRobot(0)
 {
 	m_pWorld = new World();
 	m_pWorld->setGravity(0,0,-9.81);
