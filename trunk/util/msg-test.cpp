@@ -106,7 +106,7 @@ namespace
 			REQUIRE( m_a.value == true );
 			m_a.publish();
 		}
-		void handle() { m_beenHere = true; }
+		void handle(bool& nothing) { m_beenHere = true; }
 	};
 
 	AUTOTEST(callback) //{{{1
