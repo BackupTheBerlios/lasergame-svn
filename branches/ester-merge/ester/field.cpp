@@ -3,6 +3,7 @@
 #include "util/assert.h"
 
 #include <algorithm>
+#include <ctime>
 
 using namespace measures;
 using namespace num;
