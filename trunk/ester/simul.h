@@ -49,10 +49,11 @@ class Simul : public msg::Runnable
 		
 	public:
 		Simul(msg::Channel* in_pChannel, Field& in_field, int in_side);
-		static msg::FactoryBase* fac(msg::Channel* in_pChannel, Field& in_field, int in_side = 0)
+		static msg::FactoryBase* fac(msg::Channel* in_pChannel, const Field& in_field, int in_side = 0)
 		{
 			return msg::factory<Simul>(in_pChannel, in_field, in_side);
 		}
+		//static msg::FactoryBase* fac2(const Robot & a, const Robot & b, const Field & in_field);
 		~Simul();
 		virtual void main();
 
@@ -61,8 +62,6 @@ class Simul : public msg::Runnable
 		void reqShoot();
 
 #if 0
-	void upMoveState();
-	void upFloorColor();
 	void upGP2();
 	void upBalls();
 	void upCamera();

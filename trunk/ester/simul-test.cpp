@@ -132,6 +132,22 @@ AUTOTEST(testTurn) //{{{1
 	REQUIRE( a.lt() );
 	REQUIRE( i == 217 );
 }
+
+AUTOTEST(testFloorColor) //{{{1
+{
+	Subs<int> dir;
+	Subs<Time> dt(dir, "time-change");
+	Subs<int> watchdog(dir, "watchdog");
+	Subs<FloorColor> floorColor(dir, "floor-color");
+	
+	Field field;
+	Task e(Simul::fac(dir, field, 0));
+	waitFor(dt);         // wait until simulator is ready
+	watchdog.publish();  // make step
+	waitFor(floorColor); // wait for floor color message to come in
+	
+	// TODO who to test this further?
+}
 //}}}
 
 #if 0
@@ -171,23 +187,7 @@ AUTOTEST(testTruePose) //{{{2
 }
 //}}}
 
-//{{{1 testFloorColor()
-struct TestFloorColor : public Action //{{{2
-{
-	virtual int main()
-	{
-		//execute();
-		// don't know how to test :-(
-		return 0;
-	}
-};
 
-AUTOTEST(testFloorColor) //{{{2
-{
-	EsterSimul t2;
-	TestFloorColor t3;
-	g_main.waitForAny();
-}
 //}}}
 
 //{{{1 testGP2()

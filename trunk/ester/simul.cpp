@@ -88,6 +88,12 @@ void updatePose(Pose & in_p, const Pose & in_dp, const Angle::type& AERR, const 
 
 	in_p.heading().normalize();
 }
+
+void updateFloorColor(FloorColor & in_floor, const Pose & in_frame, int in_side) //{{{1
+{
+	for (int i = 0; i < in_floor.N_ITEM; i++)
+		in_floor[i].m_color = measures::getColor(in_frame.transform(in_floor[i]), in_side);
+}
 //}}}
 }
 
@@ -103,7 +109,7 @@ Simul::Simul(msg::Channel* in_p, Field& in_field, int in_side) //{{{1
 		
 		m_start       (in_p, "start"),
 		m_ballPos     (in_p, "ball"),
-		//Subs<FloorColor> m_floorColor;
+		m_floorColor  (in_p, "floor-color"),
 		m_numBallsIn  (in_p, "num-balls-in"),
 		m_gp2top      (in_p, "gp2top"),
 		m_reqShoot    (in_p, "shoot-req", this, &Simul::reqShoot),
@@ -117,6 +123,18 @@ Simul::Simul(msg::Channel* in_p, Field& in_field, int in_side) //{{{1
 	m_start.value = true;
 	m_numBallsIn.value = 0;
 	m_rnd.setSeed(m_seed.value);
+
+	// Ester
+	int n = 0;
+	m_floorColor.value[n++] = Point(Milim( 14), Milim( 96));
+	m_floorColor.value[n++] = Point(Milim(113), Milim( 96));
+	m_floorColor.value[n++] = Point(Milim(-62), Milim( 45));
+	m_floorColor.value[n++] = Point(Milim( 15), Milim( 35));
+	m_floorColor.value[n++] = Point(Milim( 15), Milim(-36));
+	m_floorColor.value[n++] = Point(Milim(-62), Milim(-41));
+	m_floorColor.value[n++] = Point(Milim(111), Milim(-96));
+	m_floorColor.value[n++] = Point(Milim( 14), Milim(-96));
+	ASSERT( n == m_floorColor.value.N_ITEM );
 }
 
 Simul::~Simul() //{{{1
@@ -140,9 +158,9 @@ void Simul::main() //{{{1
 		updatePose(m_pose.value, m_poseChange.value, AERR, FERR, DERR, m_rnd);
 		m_pose.publish();
 		
-		//updateFloorColor(m_floorColor.value, m_pose.value);
-		//m_floorColor.publish();
-		//
+		updateFloorColor(m_floorColor.value, m_pose.value, m_side);
+		m_floorColor.publish();
+		
 		//upGP2(m_gp2top.value, m_field, m_pose.value);
 		//m_gp2top.publish();
 		//
@@ -173,27 +191,6 @@ void Simul::reqShoot() //{{{1
 }
 
 #if 0
-void Simul::upFloorColor() //{{{1
-{
-
-	int n = 0;
-	m_floorColor[n++] = Point(Milim( 14), Milim( 96));
-	m_floorColor[n++] = Point(Milim(113), Milim( 96));
-	m_floorColor[n++] = Point(Milim(-62), Milim( 45));
-	m_floorColor[n++] = Point(Milim( 15), Milim( 35));
-	m_floorColor[n++] = Point(Milim( 15), Milim(-36));
-	m_floorColor[n++] = Point(Milim(-62), Milim(-41));
-	m_floorColor[n++] = Point(Milim(111), Milim(-96));
-	m_floorColor[n++] = Point(Milim( 14), Milim(-96));
-	ASSERT( n == m_floorColor.N_ITEM );
-
-	
-	m_floorColor.m_time = m_timeChange.m_time;
-
-	for (int i = 0; i < m_floorColor.N_ITEM; i++)
-		m_floorColor[i].m_color = measures::getColor(m_pose.m_pose + m_floorColor[i], m_side);
-}
-
 void EsterSimul::upGP2() //{{{1
 {
 	using num::Dist;
