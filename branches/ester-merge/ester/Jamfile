@@ -9,6 +9,8 @@ obj simul : simul.cpp ;
 libs = /util//thread /util//msg ;
 #lib controller : EsterSimul Move EsterUSB MCL /cam//cam /mcl//mcl $(libs) : <link>static ;
 
+unit-test measures-test : measures-test.cpp ;
+#unit-test field-test : field-test.cpp field.cpp ;
 unit-test simul-test : simul-test.cpp simul $(libs) ;
 #my-test move-test : MoveTest.cpp Move EsterSimul $(libs) ;
 #my-test ball-scan-test : BallScanTest.cpp EsterSimul Move $(libs) ;
