@@ -22,7 +22,7 @@ namespace
 
 	AUTOTEST(sendReceiveSingle) //{{{1
 	{
-		Subs<bool> root(0);
+		Dir root;
 		Subs<int> sender(root, "number");
 		Subs<int> receiver(root, "number");
 		Subs<int> nonReceiver(root, "aaa");
