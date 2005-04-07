@@ -40,11 +40,11 @@ namespace msg
 		public:
 			TaskItem(SubsBase* in_targetSubs, void* in_user) 
 				: m_subs(in_targetSubs), m_user(in_user) {}
-			/// Intentionaly blank 
+			/// Intentionaly blank -- cannot destroy m_user data because it wouldn't be copy-safe
 			~TaskItem() {}
 			SubsBase* getSubs() { return m_subs; }
-			void destroy() { m_subs->destroy(m_user); m_user = 0; }
-			void execute() { m_subs->execute(m_user); destroy(); }
+			void destroyUser() { m_subs->destroy(m_user); m_user = 0; }
+			void execute() { m_subs->accept(m_user); destroyUser(); }
 	};
 
 	struct TaskImplKey : public thread::Key //{{{1
@@ -248,17 +248,22 @@ SubsBase* processSubs() //{{{1
 	// 1. find current thread and associated queue
 	TaskImpl* t = s_impl();
 	// 2. lock it
-	Locker lock(*t);
+	t->lock();
 	// 3. pop and return the item
 	while (t->empty() && t->running())
 		t->wait();
 	if (!t->running())
+	{
+		// [4. unlock]
+		t->unlock();
 		throw stop();
-	SubsBase* ret = t->front().getSubs();
-	t->front().execute();
+	}
+	TaskItem ti(t->front());
 	t->pop_front();
-	return ret;
-	// [4. auto-unlock]
+	// [4. unlock]
+	t->unlock();
+	ti.execute(); // destroys user data
+	return ti.getSubs();
 }
 
 void waitFor(SubsBase& in_subs) //{{{1
@@ -281,7 +286,7 @@ namespace detail {
 			{
 				TaskImpl::iterator to_del = i;
 				i++;
-				to_del->destroy();
+				to_del->destroyUser();
 				t->erase(to_del);
 				i--;
 			}

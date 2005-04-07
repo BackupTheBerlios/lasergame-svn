@@ -85,7 +85,7 @@ namespace msg
 			virtual void* create() const = 0;
 			virtual void destroy(void* in_data) const = 0;
 			virtual void checkType(SubsBase*) const = 0;
-			virtual void execute(void*) = 0;
+			virtual void accept(void*) = 0;
 			void publish() const;
 			operator Channel* ();
 			void postItem(void* data);
@@ -133,7 +133,7 @@ namespace msg
 				: SubsImpl<T>(in_pChannel), m_obj(in_obj), m_c(in_c) 
 			{ 
 			}
-			virtual void execute(void * in_data) 
+			virtual void accept(void * in_data) 
 			{ 
 				value = *(T*)in_data; 
 				(m_obj->*m_c)(value);
@@ -146,14 +146,14 @@ namespace msg
 			Subs() { /* not subscribed */ }
 			Subs(Channel* in_parent, const char* in_name) : SubsImpl<T>(in_parent, in_name){ }
 			Subs(Channel* in_pChannel) : SubsImpl<T>(in_pChannel) { }
-			virtual void execute(void * in_data) { value = *(T*)in_data; }
+			virtual void accept(void * in_data) { value = *(T*)in_data; }
 	};
 	
 	class Dir : public SubsImpl<UnusedTag> //{{{1
 	{
 		public:
 			Dir() { subscribe(0); }
-			virtual void execute(void *) {}
+			virtual void accept(void *) {}
 	};
 	//}}}
 
