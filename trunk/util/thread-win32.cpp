@@ -84,6 +84,7 @@ namespace thread
 	}
 	void CondVar::broadcast()
 	{
+		Sleep(0);
 		BOOL ret UNUSED = PulseEvent(m_cv);
 		ASSERT( ret );
 	}
