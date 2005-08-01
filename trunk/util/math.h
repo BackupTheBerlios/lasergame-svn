@@ -15,11 +15,15 @@
 	inline int    isnan(double x){ return _isnan(x); }
 	inline int    fpclass(double x){ return _fpclass(x); }
 
-#	ifdef _MSC_VER
-#		define M_SQRT2	1.41421356237309504880	/* sqrt(2) */
+# ifndef M_PI
 #		define M_PI 3.1415926535897932384626433832795
+#endif
+
+#	ifdef M_SQRT2
+#		define M_SQRT2	1.41421356237309504880	/* sqrt(2) */
 #	endif
 
+	
 #elif defined linux
 
 #endif
